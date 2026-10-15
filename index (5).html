@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LSPD Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#060a13;--bg2:#0a111f;--panel:#0e1729;--panel2:#13203a;--line:#1c2d4d;--line2:#2a4470;
+  --text:#e9eff8;--muted:#8ea0bd;--steel:#5b8bb8;--steel2:#9dbbdb;--gold:#d8a935;--gold2:#f2cd6b;
+  --red:#ec5258;--amber:#f4a73b;--green:#33c790;--blue:#4f8dfd;
+  --side:#050912;--sidetext:#b7c5dc;--sidehover:#0f1c33;--sideline:#14223d;
+  --shadow:0 10px 32px rgba(0,0,0,.4);--r:10px;
+  --fd:'Barlow Condensed','Arial Narrow',Arial,sans-serif;--fb:'Barlow','Segoe UI',Arial,sans-serif;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#edf1f7;--bg2:#e3e9f2;--panel:#ffffff;--panel2:#f1f5fa;--line:#d6dfec;--line2:#b4c5dc;
+  --text:#0c1830;--muted:#56688a;--steel:#2d5d93;--steel2:#3c6ea6;--gold:#9a6f0c;--gold2:#8a6200;
+  --red:#c9363c;--amber:#b36a00;--green:#14805a;--blue:#2860d8;
+  --side:#0a1a36;--sidetext:#c3d0e6;--sidehover:#14284d;--sideline:#1d3358;
+  --shadow:0 10px 28px rgba(20,40,80,.14);color-scheme:light;
+}
+html[lang="ar"]{--fd:'Tajawal','Segoe UI',Tahoma,sans-serif;--fb:'Tajawal','Segoe UI',Tahoma,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:400 15px/1.5 var(--fb);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--steel2)}
+.ic{flex:none;vertical-align:middle}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+/* shell */
+.app{display:grid;grid-template-columns:var(--sw,252px) minmax(0,1fr);min-height:100vh}
+.app.collapsed{--sw:74px}
+.side{background:var(--side);color:var(--sidetext);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;border-inline-end:1px solid var(--sideline);z-index:40;overflow:hidden}
+.brand{display:flex;gap:12px;align-items:center;padding:16px;border-bottom:1px solid var(--sideline);min-height:72px}
+.brand svg{width:42px;height:42px;flex:none}
+.brand b{display:block;font:700 21px/1 var(--fd);letter-spacing:.05em;color:#fff}
+.brand small{display:block;color:var(--steel);font-size:12px;margin-top:3px}
+.nav{flex:1;overflow:auto;padding:10px 0}
+.nav a{display:flex;gap:12px;align-items:center;padding:10px 14px;margin:2px 8px;border-radius:8px;color:var(--sidetext);text-decoration:none;cursor:pointer;font-weight:500;border-inline-start:3px solid transparent;white-space:nowrap}
+.nav a:hover{background:var(--sidehover);color:#fff}
+.nav a.on{background:var(--sidehover);color:#fff;border-inline-start-color:var(--gold)}
+.nav a .cnt{margin-inline-start:auto;background:var(--red);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:0 7px;line-height:18px}
+.nav .sep{margin:12px 20px 4px;font-size:12px;color:var(--steel);font-weight:600}
+.sidefoot{border-top:1px solid var(--sideline);padding:12px;display:flex;flex-direction:column;gap:8px;font-size:12px}
+.sidefoot .btn{background:transparent;color:var(--sidetext);border-color:var(--sideline);justify-content:center}
+.collapsed .lbl,.collapsed .brand div,.collapsed .sidefoot .meta,.collapsed .nav .sep,.collapsed .cnt{display:none}
+.collapsed .nav a{justify-content:center;padding-inline:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:flex;gap:10px;align-items:center;padding:10px 20px;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .grow{flex:1}
+.dropwrap{position:relative}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--panel);cursor:pointer;color:var(--text);position:relative}
+.icon-btn:hover{border-color:var(--steel)}
+.icon-btn .dot{position:absolute;top:-5px;inset-inline-end:-5px;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:999px;min-width:17px;height:17px;line-height:17px;text-align:center;padding:0 4px}
+.search{position:relative;flex:1;max-width:520px}
+.search input{width:100%;height:38px;padding-inline:38px 12px;border-radius:9px;border:1px solid var(--line);background:var(--panel);outline-offset:0}
+.search .ic{position:absolute;inset-inline-start:11px;top:10px;color:var(--muted)}
+.drop{position:absolute;inset-inline-end:0;top:calc(100% + 8px);min-width:320px;max-width:92vw;background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);box-shadow:var(--shadow);z-index:60;max-height:72vh;overflow:auto}
+.search .drop{inset-inline-start:0;inset-inline-end:auto;width:100%}
+.drop h4{margin:0;padding:10px 14px 4px;font:600 13px var(--fd);color:var(--gold)}
+.drop .row{display:flex;gap:10px;align-items:center;padding:9px 14px;cursor:pointer;border-top:1px solid var(--line);font-size:14px;background:none;border-inline:0;border-bottom:0;width:100%;text-align:start}
+.drop .row:hover{background:var(--panel2)}
+.drop .row small{color:var(--muted);display:block}
+.main{padding:22px 24px 64px;max-width:1560px;width:100%;margin:0 auto}
+.scrim{display:none}
+
+/* typography & primitives */
+h1.pt{font:700 32px/1.05 var(--fd);margin:0;letter-spacing:.01em}
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.ph .acts{display:flex;gap:8px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(172px,1fr))}
+.c2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.c3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.split{grid-template-columns:minmax(0,1fr) 340px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.card>h3,.ct{margin:0 0 12px;font:600 18px/1.2 var(--fd);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ct small{font:400 12px var(--fb);color:var(--muted)}
+.kpi{cursor:pointer;border-inline-start:3px solid var(--steel);padding:13px 15px;transition:border-color .15s,background .15s}
+.kpi:hover{background:var(--panel2)}
+.kpi .n{font:700 38px/1 var(--fd)}
+.kpi .l{color:var(--muted);font-size:13px;margin-top:4px}
+.kpi.gold{border-inline-start-color:var(--gold)}.kpi.gold .n{color:var(--gold2)}
+.kpi.green{border-inline-start-color:var(--green)}.kpi.amber{border-inline-start-color:var(--amber)}.kpi.red{border-inline-start-color:var(--red)}
+.bd{--c:var(--muted);display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:999px;font-size:12px;font-weight:600;color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+.bd::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c)}
+.bd.green{--c:var(--green)}.bd.amber{--c:var(--amber)}.bd.red{--c:var(--red)}.bd.steel{--c:var(--steel2)}.bd.gold{--c:var(--gold2)}.bd.blue{--c:var(--blue)}
+.bd.p1{--c:var(--red)}.bd.p2{--c:var(--amber)}.bd.p3{--c:var(--green)}.bd.p4{--c:var(--steel2)}
+.bd.nodot::before{display:none}
+.chip{display:inline-block;padding:1px 8px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--steel2);margin:1px 2px}
+.btn{display:inline-flex;gap:7px;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;border:1px solid var(--line2);background:var(--panel2);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--steel)}
+.btn.pri{background:var(--steel);border-color:var(--steel);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1d1400}
+.btn.red{background:color-mix(in srgb,var(--red) 18%,transparent);border-color:var(--red);color:var(--red)}
+.btn.green{background:color-mix(in srgb,var(--green) 18%,transparent);border-color:var(--green);color:var(--green)}
+.btn.sm{padding:4px 9px;font-size:13px}
+.btn.ico{padding:5px 7px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:start;padding:9px 12px;color:var(--muted);font-weight:600;font-size:13px;border-bottom:1px solid var(--line2);white-space:nowrap;user-select:none}
+.tbl th.s{cursor:pointer}.tbl th.s:hover{color:var(--text)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr:hover td{background:var(--panel2)}
+.tbl tr.click{cursor:pointer}
+.tbl td.act{white-space:nowrap}
+.scroll{overflow-x:auto}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;margin-bottom:16px}
+.tab{padding:10px 16px;cursor:pointer;color:var(--muted);border:0;border-bottom:2px solid transparent;background:none;white-space:nowrap;font-weight:600}
+.tab:hover{color:var(--text)}.tab.on{color:var(--text);border-bottom-color:var(--gold)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.filters input,.filters select,.fld input,.fld select,.fld textarea,.inl{height:38px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);min-width:0}
+.fld textarea{height:auto;padding:8px 10px;width:100%;resize:vertical}
+.filters input{min-width:220px}
+.pillset{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:5px 12px;border-radius:999px;border:1px solid var(--line2);background:none;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
+.pill.on{background:var(--steel);border-color:var(--steel);color:#fff}
+.mut{color:var(--muted)}
+.gold-t{color:var(--gold2)}
+.av{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--panel2);border:1.5px solid var(--steel);font:700 13px var(--fd);flex:none}
+.av.cmd{border-color:var(--gold);color:var(--gold2)}
+.av.lg{width:64px;height:64px;font-size:22px}
+.who{display:flex;align-items:center;gap:10px}
+.who small{display:block;color:var(--muted);font-size:12px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.kv div small{display:block;color:var(--muted);font-size:12px}
+.kv div b{font-weight:500}
+.tl{border-inline-start:2px solid var(--line2);margin-inline-start:6px;padding-inline-start:18px}
+.tl .it{position:relative;padding-bottom:16px}
+.tl .it::before{content:'';position:absolute;inset-inline-start:-25px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid var(--panel)}
+.tl .it.s::before{background:var(--steel)}.tl .it.r::before{background:var(--red)}.tl .it.g::before{background:var(--green)}
+.tl .it small{color:var(--muted);display:block}
+.feed .fi{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.feed .fi:last-child{border:0}
+.feed .fi time{color:var(--muted);font-size:12px;min-width:48px;font-variant-numeric:tabular-nums}
+.feed .fi a{cursor:pointer;color:var(--steel2);font-weight:600}
+.empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed var(--line2);border-radius:var(--r)}
+.hbar{display:grid;grid-template-columns:130px 1fr 38px;gap:10px;align-items:center;font-size:13px;margin:6px 0}
+.hbar .t{height:9px;background:var(--bg2);border-radius:5px;overflow:hidden}
+.hbar .t i{display:block;height:100%;border-radius:5px;background:var(--steel)}
+.hbar b{text-align:end;font-variant-numeric:tabular-nums}
+.pb{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}.pb i{display:block;height:100%;background:var(--green)}
+.chart{width:100%;height:auto;display:block}
+.chart .grid-l{stroke:var(--line);stroke-width:1}
+.chart .axl{fill:var(--muted);font:11px var(--fb)}
+.chart .val{fill:var(--text);font:600 11px var(--fb)}
+.donut{width:150px;flex:none}.donut .dn{fill:var(--text);font:700 24px var(--fd)}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:8px}
+.dwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+
+/* command banner */
+.banner{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:16px 20px;margin-bottom:14px;border-radius:var(--r);border:1px solid var(--line2);background:linear-gradient(100deg,#0f2142 0%,#0b1630 55%,#09101f 100%);color:#e9eff8;position:relative;overflow:hidden}
+:root[data-theme="light"] .banner{background:linear-gradient(100deg,#13305f,#0e2247)}
+.banner .clock{font:700 44px/1 var(--fd);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.banner .clock small{display:block;font:500 13px var(--fb);color:var(--steel2);letter-spacing:0;margin-top:4px}
+.banner .mid{display:flex;gap:26px;flex-wrap:wrap}
+.banner .mid div small{display:block;color:var(--steel2);font-size:12px}
+.banner .mid div b{font:600 19px var(--fd);color:#fff}
+.banner .mid .g b{color:var(--gold2)}
+.simtag{display:inline-flex;gap:7px;align-items:center;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--amber);color:var(--amber);background:color-mix(in srgb,var(--amber) 12%,transparent)}
+.simtag i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:pulse 1.8s infinite}
+.simtag.off i{animation:none;background:var(--muted)}.simtag.off{border-color:var(--muted);color:var(--muted)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--amber) 70%,transparent)}100%{box-shadow:0 0 0 9px transparent}}
+.p1row td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+[dir=rtl] .p1row td:first-child{box-shadow:inset -3px 0 0 var(--red)}
+
+/* map */
+.map{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--r);width:100%;height:auto;display:block}
+.map .zone{fill:var(--panel);stroke:var(--line2);stroke-width:1.2}
+.map .zone:hover{fill:var(--panel2)}
+.map .zn{fill:var(--muted);font:600 13px var(--fd)}
+.map .road{stroke:var(--line2);stroke-width:5;opacity:.5;fill:none}
+.map .u{cursor:pointer}.map .ul{fill:var(--text);font:600 10px var(--fb);paint-order:stroke;stroke:var(--bg2);stroke-width:3}
+.map .callp{animation:pulse2 1.6s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* calendar */
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .h{text-align:center;color:var(--muted);font-size:12px;padding:4px}
+.cal .d{min-height:78px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12px;background:var(--bg2);min-width:0}
+.cal .d.today{border-color:var(--gold)}.cal .d.o{opacity:.35}
+.cal .d b{font:600 13px var(--fd)}
+.cal .ev{display:block;margin-top:2px;padding:0 5px;border-radius:4px;font-size:11px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:color-mix(in srgb,var(--steel) 30%,transparent);cursor:pointer}
+.cal .ev.ceremony{background:color-mix(in srgb,var(--gold) 30%,transparent)}.cal .ev.training{background:color-mix(in srgb,var(--green) 28%,transparent)}.cal .ev.operation{background:color-mix(in srgb,var(--red) 28%,transparent)}
+
+/* modal / toast */
+.ov{position:fixed;inset:0;background:rgba(2,6,14,.72);display:grid;place-items:center;z-index:100;padding:14px}
+.mdl{background:var(--panel);border:1px solid var(--line2);border-radius:12px;width:min(700px,100%);max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.mdl.wide{width:min(980px,100%)}
+.mdl>header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mdl>header h2{margin:0;font:700 22px var(--fd)}
+.mdl .mb{padding:18px;overflow:auto}
+.mdl>footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.frm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0}.fld.full{grid-column:1/-1}
+.fld label{font-size:13px;color:var(--muted);font-weight:600}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+.ck{display:flex;gap:8px;align-items:center;font-size:14px}
+.toasts{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));inset-inline-end:18px;display:flex;flex-direction:column;gap:8px;z-index:200}
+.toast{background:var(--panel2);border:1px solid var(--line2);border-inline-start:4px solid var(--steel);padding:10px 14px;border-radius:8px;box-shadow:var(--shadow);max-width:340px;font-size:14px}
+.toast.ok{border-inline-start-color:var(--green)}.toast.err{border-inline-start-color:var(--red)}
+.lock{max-width:520px;margin:60px auto;text-align:center}
+.lock .ic{color:var(--gold)}
+pre.dump{white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto;background:var(--bg2);padding:10px;border-radius:8px;font-size:12px;border:1px solid var(--line)}
+textarea.big{width:100%;min-height:150px;padding:8px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.scorebar{display:flex;gap:3px}.scorebar i{width:18px;height:8px;border-radius:2px;background:var(--line2)}.scorebar i.f{background:var(--gold)}
+
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(1200px 600px at 20% 0%,color-mix(in srgb,var(--steel) 14%,transparent),transparent),var(--bg)}
+.lg-card{display:grid;grid-template-columns:1fr 1fr;width:min(920px,100%);border:1px solid var(--line2);border-radius:16px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
+.lg-brand{padding:40px 36px;background:linear-gradient(140deg,#11264b 0%,var(--panel) 75%);border-inline-end:1px solid var(--line)}
+.lg-brand svg{width:64px;height:64px}
+.lg-brand h1{font:700 38px/1.05 var(--fd);margin:22px 0 14px;color:var(--text)}
+.lg-brand p{color:var(--muted);margin:0;max-width:340px}
+.lg-form{padding:32px 34px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+.lg-top{display:flex;justify-content:space-between;align-items:center}
+.lg-top h2{margin:0;font:700 24px var(--fd)}
+.lg-form .fld input{height:46px;width:100%;padding:0 12px;background:var(--bg2)}
+.lg-btn{height:46px;border-radius:9px;border:0;background:var(--gold);color:#1d1400;font-weight:700;font-size:15px;cursor:pointer}
+.lg-btn:hover{filter:brightness(1.08)}.lg-btn[disabled]{opacity:.6;cursor:wait}
+.lg-err{color:var(--red);font-size:14px;min-height:20px}
+.lg-note{border:1px solid var(--amber);background:color-mix(in srgb,var(--amber) 12%,transparent);border-radius:9px;padding:10px 12px;font-size:13px}
+@media (max-width:760px){.lg-card{grid-template-columns:1fr}.lg-brand{border-inline-end:0;border-bottom:1px solid var(--line);padding:26px}.lg-brand h1{font-size:30px}}
+@media (max-width:1100px){.split{grid-template-columns:1fr}}
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;inset-block:0;inset-inline-start:0;width:272px;height:100dvh;transform:translateX(-102%);transition:transform .2s}
+  [dir=rtl] .side{transform:translateX(102%)}
+  .app.open .side{transform:none}
+  .app.open .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:35}
+  .app.collapsed{--sw:1fr}.collapsed .lbl,.collapsed .brand div,.collapsed .sidefoot .meta,.collapsed .nav .sep{display:revert}
+  .collapsed .nav a{justify-content:flex-start;padding-inline:14px}
+  .hide-m{display:none!important}
+  .main{padding:16px 14px 64px}
+  .banner{grid-template-columns:1fr}
+  .top{padding:8px 12px}
+  .frm{grid-template-columns:1fr}
+  h1.pt{font-size:26px}
+}
+@media (min-width:981px){.only-m{display:none!important}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side" id="side"></aside>
+  <div class="scrim" data-act="navclose"></div>
+  <div>
+    <header class="top" id="top"></header>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+<div id="login" hidden></div>
+<div id="modal"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script>
+'use strict';
+/* =====================================================================
+   SUPABASE CONNECTION — fill these two values (Project Settings > API)
+   Use the anon / public key ONLY. Never put the service_role key here.
+   ===================================================================== */
+const SUPABASE_URL='https://nrkwlepcotxzqwzbkcoh.supabase.co';        // your Supabase project URL
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ya3dsZXBjb3R4enF3emJrY29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwMDMwNTQsImV4cCI6MjEwNzU3OTA1NH0.eSrOrJ1fW15PrLwRMpBhW8KpZbCEPAiENDcMzoN9kfM';   // anon public key (safe in the browser — protected by RLS)
+const AUTH={ok:false,demo:false,user:null};
+
+/* ================= helpers ================= */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let LANG='en';
+const T=(en,ar)=>LANG==='ar'?ar:en;
+const tx=x=>x==null?'':(typeof x==='string'?x:(x[LANG]||x.en||''));
+const lb=(m,k)=>m[k]?m[k][LANG==='ar'?1:0]:k;
+const DAY=864e5,MIN=6e4;
+const isoDay=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const dAgo=n=>isoDay(Date.now()-n*DAY);
+const loc=()=>LANG==='ar'?'ar-u-nu-latn':'en-GB';
+const fD=s=>s?new Date(s+'T12:00:00').toLocaleDateString(loc(),{day:'2-digit',month:'short',year:'numeric'}):'—';
+const fT=ts=>new Date(ts).toLocaleTimeString(loc(),{hour:'2-digit',minute:'2-digit',hour12:false});
+const fDT=ts=>fD(isoDay(ts))+' '+fT(ts);
+const ago=ts=>{const m=Math.round((Date.now()-ts)/MIN);if(m<1)return T('just now','الآن');if(m<60)return T(m+' min ago','قبل '+m+' د');const h=Math.round(m/60);if(h<48)return T(h+' h ago','قبل '+h+' س');const d=Math.round(h/24);return T(d+' d ago','قبل '+d+' يوم')};
+const rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const hash=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return Math.abs(h)};
+
+/* ================= reference data ================= */
+const RANKS=[['Chief of Police','قائد الشرطة','CoP',1,1],['Assistant Chief','مساعد القائد','AC',1,1],['Deputy Chief','نائب القائد','DC',1,1],['Commander','قائد قطاع','CMDR',1,1],['Captain','نقيب','CPT',1,1],['Lieutenant','ملازم أول','LT',0,1],['Sergeant II','رقيب أول','SGT II',0,1],['Sergeant I','رقيب','SGT I',0,1],['Police Officer III','شرطي أول','PO III',0,0],['Police Officer II','شرطي','PO II',0,0],['Police Officer I','شرطي مبتدئ','PO I',0,0],['Probationary Officer','شرطي متدرب','PROB',0,0]];  // [en, ar, abbr, isCommand, canSupervise]
+const RK={};RANKS.forEach((r,i)=>RK[i]=r);
+const isCmd=r=>!!(RANKS[r]&&RANKS[r][3]);
+const canSup=r=>!!(RANKS[r]&&RANKS[r][4]);
+function syncRK(){Object.keys(RK).forEach(k=>delete RK[k]);RANKS.forEach((r,i)=>RK[i]=r)}
+function applyRanks(){if(Array.isArray(S.ranks)&&S.ranks.length)RANKS.splice(0,RANKS.length,...S.ranks);S.ranks=RANKS;syncRK()}
+const DIVS={patrol:['Patrol','الدوريات'],metro:['Metropolitan','المتروبوليتان'],traffic:['Traffic','المرور'],detectives:['Detectives','المباحث'],dispatch:['Dispatch','الدسباتش'],training:['Training','التدريب'],ia:['Internal Affairs','الشؤون الداخلية'],air:['Air Support','الإسناد الجوي'],k9:['K-9','الكلاب البوليسية'],command:['Command Staff','القيادة']};
+const STAT={onpatrol:['On Patrol','في الدورية','green'],dispatch:['On Dispatch','على الدسباتش','green'],onduty:['On Duty (Station)','على رأس العمل','green'],off:['Off Duty','خارج الدوام','steel'],leave:['On Leave','إجازة','amber'],suspended:['Suspended','موقوف','red'],archived:['Archived','مؤرشف','']};
+const isOn=o=>['onpatrol','dispatch','onduty'].includes(o.status);
+const QUALS={fto:['Field Training Officer','مدرب ميداني'],evo:['Emergency Vehicle Ops','قيادة الطوارئ'],fa:['Firearms Qualified','رماية معتمدة'],dt:['Defensive Tactics','تكتيكات دفاعية'],tc:['Tactical Communications','تواصل تكتيكي'],cn:['Crisis Negotiation','تفاوض الأزمات'],k9:['K-9 Handler','مدرب كلاب'],air:['Air Support Pilot','طيار إسناد'],tci:['Collision Investigation','تحقيق الحوادث'],det:['Detective Basic','محقق مبتدئ'],dsp:['Dispatch Certified','معتمد دسباتش'],ia:['IA Investigator','محقق شؤون داخلية'],fa2:['First Aid / CPR','إسعافات أولية'],rw:['Report Writing','كتابة التقارير']};
+const CALLTYPES={robbery:['Robbery in progress','سطو مسلح','211',1],shots:['Shots fired','إطلاق نار','245',1],officer:['Officer needs assistance','ضابط يحتاج مساندة','999',1],pursuit:['Vehicle pursuit','مطاردة مركبة','10-80',1],collision:['Traffic collision','حادث مروري','11-83',2],burglary:['Burglary alarm','إنذار اقتحام','459',2],theft:['Vehicle theft','سرقة مركبة','487',2],medical:['Medical assist','مساندة طبية','10-52',2],disturb:['Disturbance','شجار / إزعاج','415',3],welfare:['Welfare check','طلب اطمئنان','10-21',3],suspect:['Suspicious person','شخص مشبوه','10-66',3],noise:['Noise complaint','شكوى ضوضاء','415N',4],hazard:['Traffic hazard','خطر مروري','11-25',4]};
+const RTYPES={...CALLTYPES,arrest:['Arrest','قبض','ARR',2],citation:['Citation','مخالفة','CIT',4]};
+const PRI={1:['Critical','حرج'],2:['High','عالٍ'],3:['Medium','متوسط'],4:['Low','منخفض']};
+const CST={pending:['Pending','معلّق','red'],dispatched:['Dispatched','تم الإرسال','amber'],onscene:['On scene','في الموقع','amber'],followup:['Follow-up','متابعة','blue'],closed:['Closed','مغلق','steel']};
+const UST={available:['Available','متاح','green'],enroute:['En route','في الطريق','amber'],onscene:['On scene','في الموقع','amber'],busy:['Busy','مشغول','blue'],unavailable:['Unavailable','غير متاح','red']};
+const RST={draft:['Draft','مسودة','steel'],pending:['Awaiting approval','بانتظار الاعتماد','amber'],approved:['Approved','معتمد','green'],returned:['Returned','معاد للتعديل','red']};
+const LOCS=[['Mission Row','ميشن رو','downtown'],['Legion Square','ساحة ليجن','downtown'],['Vinewood Blvd','شارع فاينوود','vinewood'],['Del Perro Pier','رصيف ديل بيرو','delperro'],['Vespucci Beach','شاطئ فيسبوتشي','vespucci'],['Davis Avenue','شارع ديفيس','davis'],['Rockford Plaza','ميدان روكفورد','rockford'],['La Mesa Industrial','لا ميسا الصناعية','lamesa'],['Strawberry Ave','شارع ستروبيري','strawberry'],['LSIA Terminal','مطار لوس سانتوس','lsia'],['Alta Street','شارع ألتا','downtown'],['Grove Street','شارع جروف','davis'],['Pillbox Medical','مركز بيلبوكس الطبي','downtown'],['Little Seoul','ليتل سول','rockford']];
+const ZONES={rockford:['Rockford Hills','روكفورد هيلز',0,0],vinewood:['Vinewood','فاينوود',1,0],lamesa:['La Mesa','لا ميسا',2,0],delperro:['Del Perro','ديل بيرو',0,1],downtown:['Downtown','وسط المدينة',1,1],strawberry:['Strawberry','ستروبيري',2,1],vespucci:['Vespucci','فيسبوتشي',0,2],davis:['Davis','ديفيس',1,2],lsia:['LSIA','المطار',2,2]};
+const ZW=250,ZH=150,ZG=10;
+const COURSES={evo:['Emergency Vehicle Operations','قيادة مركبات الطوارئ'],fa:['Firearms Qualification','التأهيل على الرماية'],tc:['Tactical Communications','التواصل التكتيكي'],cn:['Crisis Negotiation','التفاوض في الأزمات'],fto:['Field Training Officer Course','دورة المدرب الميداني'],dsp:['Dispatch Certification','شهادة الدسباتش'],dt:['Defensive Tactics','التكتيكات الدفاعية'],rw:['Report Writing Workshop','ورشة كتابة التقارير'],k9:['K-9 Handler Course','دورة مدرب الكلاب'],tci:['Collision Investigation','تحقيق الحوادث المرورية'],fa2:['First Aid / CPR','الإسعافات الأولية']};
+const ALLEG={force:['Excessive force','استخدام مفرط للقوة'],conduct:['Improper conduct','سلوك غير لائق'],proc:['Failure to follow procedure','مخالفة الإجراءات'],equip:['Misuse of equipment','سوء استخدام المعدات'],attend:['Attendance / tardiness','الحضور والتأخر'],radio:['Radio discipline','الانضباط اللاسلكي']};
+const IAST={open:['Open','مفتوحة','amber'],investigating:['Investigating','قيد التحقيق','blue'],sustained:['Sustained','مثبتة','red'],notsustained:['Not sustained','غير مثبتة','steel'],unfounded:['Unfounded','لا أساس لها','green'],closed:['Closed','مغلقة','steel']};
+const ROLES={command:['Command Staff','القيادة'],supervisor:['Supervisor','مشرف'],dispatcher:['Dispatcher','دسباتشر'],officer:['Officer','عسكري'],ia:['Internal Affairs','شؤون داخلية']};
+const PERM={command:{edit:1,export:1,approve:1,dispatch:1,ia:1,announce:1,train:1,analytics:1,setup:1},supervisor:{edit:1,export:1,approve:1,dispatch:1,announce:1,train:1,analytics:1},dispatcher:{dispatch:1},officer:{},ia:{ia:1,export:1,analytics:1}};
+const PERMN={edit:['Edit officers','تعديل العساكر'],export:['Export CSV','تصدير CSV'],approve:['Approve reports','اعتماد التقارير'],dispatch:['Dispatch calls','إدارة البلاغات'],ia:['Internal Affairs','الشؤون الداخلية'],announce:['Post announcements','نشر التعاميم'],train:['Manage training','إدارة التدريب'],analytics:['Command analytics','تحليلات القيادة'],setup:['Setup & data','الإعدادات والبيانات']};
+const EVT={briefing:['Briefing','إحاطة'],training:['Training','تدريب'],ceremony:['Ceremony','حفل'],meeting:['Meeting','اجتماع'],operation:['Operation','عملية']};
+const OID=i=>'LSPD-'+(1001+i);
+
+/* ================= seed ================= */
+function seed(){
+  return {v:3,officers:[],units:[],calls:[],reports:[],sessions:[],cases:[],ann:[],events:[],decisions:[],
+    seq:{call:0,ir:1000,sr:500,ia:0,ann:0,ev:0,ts:200},
+    settings:{role:'command',lang:'en',theme:'dark',collapsed:false,sim:false,readAt:0,dept:{en:'Los Santos Police Department',ar:'إدارة شرطة لوس سانتوس',server:''}}};
+}
+function syncUnits(s){
+  s.units.forEach(u=>{
+    const c=s.calls.find(c=>['dispatched','onscene'].includes(c.st)&&c.units.includes(u.id));
+    if(c){u.call=c.id;u.status=c.st==='onscene'?'onscene':'enroute';u.zone=LOCS[c.loc][2]}
+    else{u.call=null;if(['enroute','onscene'].includes(u.status))u.status='available'}
+  });
+}
+const KEY='lspd-oc-clean-v1';
+let S;
+function load(){try{const j=localStorage.getItem(KEY);if(j){const x=JSON.parse(j);if(x&&x.v===3)return x}}catch(e){}return seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const gO=id=>S.officers.find(o=>o.id===id);
+const nm=id=>{const o=gO(id);return o?o.name[LANG]:'—'};
+const can=p=>!!(PERM[S.settings.role]||{})[p];
+/* ================= UI infra ================= */
+const ICONS={dashboard:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',radio:'<path d="M4.9 19.1a10 10 0 0 1 0-14.2M7.8 16.2a6 6 0 0 1 0-8.4"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M19.1 4.9a10 10 0 0 1 0 14.2"/>',file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',map:'<path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>',cap:'<path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/>',shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',mega:'<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',plus:'<path d="M12 5v14M5 12h14"/>',menu:'<path d="M3 6h18M3 12h18M3 18h18"/>',left:'<path d="M15 18l-6-6 6-6"/>',right:'<path d="M9 18l6-6-6-6"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',x:'<path d="M18 6L6 18M6 6l12 12"/>',check:'<path d="M20 6L9 17l-5-5"/>',edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',archive:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',up:'<path d="M12 19V5M5 12l7-7 7 7"/>',clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',alert:'<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'};
+const ic=(n,s=18)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]||''}</svg>`;
+const BADGE=(()=>{let p=[];for(let i=0;i<14;i++){const a=-Math.PI/2+i*Math.PI/7,r=i%2?17:29;p.push((32+r*Math.cos(a)).toFixed(1)+','+(32+r*Math.sin(a)).toFixed(1))}
+ return `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#0a1a36" stroke="#d8a935" stroke-width="2"/><polygon points="${p.join(' ')}" fill="#d8a935"/><circle cx="32" cy="32" r="14" fill="#0a1a36"/><text x="32" y="36" text-anchor="middle" font-family="Barlow Condensed,Arial,sans-serif" font-weight="700" font-size="12" fill="#f2cd6b">LSPD</text></svg>`})();
+const bd=(t,c)=>`<span class="bd ${c||''}">${esc(t)}</span>`;
+const stB=(m,k)=>bd(lb(m,k),(m[k]||[])[2]);
+const rankB=r=>bd(lb(RK,r),isCmd(r)?'gold':'steel');
+const priB=p=>`<span class="bd p${p}">P${p} · ${esc(lb(PRI,p))}</span>`;
+const sup=o=>o.sup?nm(o.sup):'—';
+const init=o=>o.name[LANG].split(' ').map(w=>w[0]).slice(0,2).join('');
+const avatar=(o,lg)=>`<span class="av ${isCmd(o.rank)?'cmd':''} ${lg?'lg':''}">${esc(init(o))}</span>`;
+const simTag=()=>!S.settings.sim?'':`<span class="simtag ${S.settings.sim?'':'off'}"><i></i>${S.settings.sim?T('SIMULATED LIVE DATA','بيانات حيّة محاكاة'):T('SIMULATION PAUSED','المحاكاة متوقفة')}</span>`;
+const empty=m=>`<div class="empty">${esc(m)}</div>`;
+
+/* charts */
+function barChart(data,{h=180,color='var(--steel)'}={}){
+  const W=440,p=22,step=(W-2*p)/data.length,bw=Math.min(44,step-10),mx=Math.max(1,...data.map(d=>d.v));
+  let s=`<svg viewBox="0 0 ${W} ${h}" class="chart" role="img">`;
+  [.25,.5,.75,1].forEach(f=>{const y=h-26-(h-50)*f;s+=`<line x1="${p}" x2="${W-p}" y1="${y}" y2="${y}" class="grid-l"/>`});
+  data.forEach((d,i)=>{const bh=(h-50)*d.v/mx,x=p+i*step+(step-bw)/2,y=h-26-bh;s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" height="${bh.toFixed(1)}" rx="3" fill="${d.c||color}"><title>${esc(d.l)}: ${d.v}</title></rect><text x="${(x+bw/2).toFixed(1)}" y="${h-10}" class="axl" text-anchor="middle">${esc(d.l)}</text><text x="${(x+bw/2).toFixed(1)}" y="${(y-5).toFixed(1)}" class="val" text-anchor="middle">${d.v}</text>`});
+  return s+'</svg>';
+}
+function lineChart(vals,labels,{h=180,color='var(--gold)',every=1}={}){
+  const W=440,p=24,mx=Math.max(...vals)*1.15||1,n=vals.length;
+  const pts=vals.map((v,i)=>[p+i*(W-2*p)/(n-1),h-26-(h-50)*v/mx]);
+  const path=pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+  let s=`<svg viewBox="0 0 ${W} ${h}" class="chart" role="img">`;
+  [.25,.5,.75,1].forEach(f=>{const y=h-26-(h-50)*f;s+=`<line x1="${p}" x2="${W-p}" y1="${y}" y2="${y}" class="grid-l"/>`});
+  s+=`<path d="${path} L${pts[n-1][0].toFixed(1)} ${h-26} L${pts[0][0].toFixed(1)} ${h-26} Z" fill="${color}" opacity=".14"/><path d="${path}" fill="none" stroke="${color}" stroke-width="2.4" stroke-linejoin="round"/>`;
+  pts.forEach((q,i)=>{s+=`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3" fill="${color}"><title>${esc(labels[i])}: ${vals[i]}</title></circle>`;if(i%every===0)s+=`<text x="${q[0].toFixed(1)}" y="${h-9}" class="axl" text-anchor="middle">${esc(labels[i])}</text>`});
+  return s+'</svg>';
+}
+function donut(data){
+  const tot=data.reduce((a,d)=>a+d.v,0),r=42,C=2*Math.PI*r;let off=0;
+  let s=`<svg viewBox="0 0 120 120" class="donut" role="img"><circle cx="60" cy="60" r="${r}" fill="none" stroke="var(--line)" stroke-width="14"/>`;
+  data.forEach(d=>{if(!d.v)return;const len=C*d.v/(tot||1);s+=`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${d.c}" stroke-width="14" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"><title>${esc(d.l)}: ${d.v}</title></circle>`;off+=len});
+  s+=`<text x="60" y="63" text-anchor="middle" class="dn">${tot}</text></svg>`;
+  return `<div class="dwrap">${s}<div class="legend">${data.map(d=>`<span><i style="background:${d.c}"></i>${esc(d.l)} — <b>${d.v}</b></span>`).join('')}</div></div>`;
+}
+const hbars=(rows,color)=>{const mx=Math.max(1,...rows.map(r=>r.v));return rows.map(r=>`<div class="hbar"><span>${esc(r.l)}</span><div class="t"><i style="width:${(100*r.v/mx).toFixed(1)}%;background:${r.c||color||'var(--steel)'}"></i></div><b>${r.v}</b></div>`).join('')};
+
+/* toast + modal */
+function toast(m,k){const e=document.createElement('div');e.className='toast '+(k||'');e.textContent=m;$('#toasts').appendChild(e);setTimeout(()=>e.remove(),3600)}
+function openModal(title,body,foot,o={}){const m=document.createElement('div');m.className='ov';m.innerHTML=`<div class="mdl ${o.wide?'wide':''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="icon-btn" data-act="close" aria-label="${T('Close','إغلاق')}">${ic('x')}</button></header><div class="mb">${body}</div>${foot?`<footer>${foot}</footer>`:''}</div>`;$('#modal').appendChild(m);const f=m.querySelector('input:not([type=checkbox]),select,textarea');if(f&&!o.nofocus)f.focus();return m}
+function closeModal(){const r=$('#modal');if(r.lastChild)r.removeChild(r.lastChild);UI.formCb=null}
+function fieldHTML(f){
+  const id='f_'+f.k,v=f.val==null?'':f.val;let i;
+  if(f.type==='select')i=`<select name="${f.k}" id="${id}">${f.opts.map(([a,b])=>`<option value="${esc(a)}" ${String(a)===String(v)?'selected':''}>${esc(b)}</option>`).join('')}</select>`;
+  else if(f.type==='textarea')i=`<textarea name="${f.k}" id="${id}" rows="${f.rows||3}" ${f.req?'required':''}>${esc(v)}</textarea>`;
+  else if(f.type==='multi')i=`<div class="chk">${f.opts.map(([a,b])=>`<label class="ck"><input type="checkbox" name="${f.k}" value="${esc(a)}" ${(v||[]).includes(a)?'checked':''}> ${esc(b)}</label>`).join('')}</div>`;
+  else i=`<input name="${f.k}" id="${id}" type="${f.type||'text'}" value="${esc(v)}" ${f.req?'required':''} ${f.min!=null?`min="${f.min}"`:''} ${f.max!=null?`max="${f.max}"`:''}>`;
+  return `<div class="fld ${f.full?'full':''}"><label for="${id}">${esc(f.label)}</label>${i}</div>`;
+}
+function FM(title,fields,onSave,o={}){
+  UI.formCb=fd=>{const v={};fields.forEach(f=>{v[f.k]=f.type==='multi'?fd.getAll(f.k):f.type==='number'?Number(fd.get(f.k)):(fd.get(f.k)||'').toString().trim()});return onSave(v)};
+  UI.formKind=o.kind||'';
+  openModal(title,`<form id="mform" class="frm">${fields.map(fieldHTML).join('')}</form>`,`<button class="btn" data-act="close">${T('Cancel','إلغاء')}</button><button class="btn pri" type="submit" form="mform">${esc(o.save||T('Save','حفظ'))}</button>`,o);
+}
+const need=p=>{if(can(p))return true;toast(T('You are not authorized for this action with the current role.','ليست لديك صلاحية لهذا الإجراء بالدور الحالي.'),'err');return false};
+const opt=(m,i)=>Object.keys(m).map(k=>[k,m[k][i==null?(LANG==='ar'?1:0):i]]);
+const offOpts=(f)=>S.officers.filter(o=>o.status!=='archived'&&(!f||f(o))).map(o=>[o.id,o.name[LANG]+' · '+o.callsign]);
+
+/* files */
+const csv=rows=>'\ufeff'+rows.map(r=>r.map(c=>{c=String(c==null?'':c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(',')).join('\n');
+async function saveFile(name,data){
+  try{
+    const dl=typeof claude!=='undefined'&&claude.use?await claude.use('downloads'):null;
+    if(dl){await dl.save({filename:name,data});toast(T('Export ready: ','تم التصدير: ')+name,'ok');return}
+    const b=new Blob([data],{type:'text/plain;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast(T('Export ready: ','تم التصدير: ')+name,'ok');
+  }catch(e){
+    if(e&&e.code==='declined')return;
+    openModal(T('Copy export','نسخ التصدير'),`<p class="mut">${T('Direct download is unavailable here. Copy the content below and save it as','التنزيل المباشر غير متاح هنا. انسخ المحتوى أدناه واحفظه باسم')} <b>${esc(name)}</b>.</p><textarea class="big" readonly>${esc(data)}</textarea>`,`<button class="btn" data-act="close">${T('Close','إغلاق')}</button>`);
+  }
+}
+
+/* ================= state / router ================= */
+const UI={view:'dashboard',arg:null,otab:'info',rtab:'incident',dsp:'all',off:{q:'',div:'',st:'',rank:'',sort:'id',dir:1,arch:false},drop:null,q:'',cal:null,navOpen:false,trn:'sessions',iaf:'all',formCb:null,formKind:'',pz:''};
+const NAV=[['dashboard','dashboard',['Command Dashboard','لوحة القيادة']],['officers','users',['Officer Directory','جدول العساكر']],['ranks','up',['Rank Management','إدارة الرتب'],'setup'],['dispatch','radio',['Dispatch Center','مركز الدسباتش']],['patrol','map',['Patrol Tracking','تتبع الدوريات']],['reports','file',['Reports & Approvals','التقارير والاعتماد']],['training','cap',['Training','التدريب']],['ia','shield',['Internal Affairs','الشؤون الداخلية'],'ia'],['analytics','chart',['Command Analytics','تحليلات القيادة'],'analytics'],['hub','mega',['Announcements & Events','التعاميم والفعاليات']],['setup','cog',['Setup & Data','الإعدادات والبيانات']]];
+function go(h){const [v,a]=h.split('/');UI.view=v;UI.arg=a||null;UI.navOpen=false;if(v==='officer'&&!UI.keepTab)UI.otab='info';try{history.replaceState(null,'','#/'+h)}catch(e){}render();window.scrollTo(0,0)}
+function fromHash(){const h=(location.hash||'').replace(/^#\/?/,'');if(h){const [v,a]=h.split('/');UI.view=v;UI.arg=a||null}}
+function sideHTML(){
+  const pend=S.reports.filter(r=>r.status==='pending').length,p1=S.calls.filter(c=>c.pr===1&&['pending','dispatched','onscene'].includes(c.st)).length;
+  return `<div class="brand">${BADGE}<div><b>LSPD</b><small>${T('Operations Center','مركز العمليات')}</small></div></div>
+  <nav class="nav" aria-label="${T('Main','القائمة')}">${NAV.filter(n=>!n[3]||can(n[3])).map(n=>`<a data-act="go" data-to="${n[0]}" class="${UI.view===n[0]||(n[0]==='officers'&&UI.view==='officer')?'on':''}" title="${esc(n[2][LANG==='ar'?1:0])}" tabindex="0">${ic(n[1],19)}<span class="lbl">${esc(n[2][LANG==='ar'?1:0])}</span>${n[0]==='dispatch'&&p1?`<span class="cnt">${p1}</span>`:''}${n[0]==='reports'&&pend&&can('approve')?`<span class="cnt" style="background:var(--amber);color:#201400">${pend}</span>`:''}</a>`).join('')}</nav>
+  <div class="sidefoot"><div class="meta mut">${esc(tx(S.settings.dept))}<br>${esc(S.settings.dept.server)}</div><button class="btn sm hide-m" data-act="collapse" aria-label="${T('Collapse sidebar','طي القائمة')}">${ic(LANG==='ar'?(S.settings.collapsed?'left':'right'):(S.settings.collapsed?'right':'left'))}<span class="lbl">${T('Collapse','طي')}</span></button></div>`;
+}
+function notifs(){
+  const n=[];
+  S.calls.filter(c=>c.pr===1&&['pending','dispatched','onscene'].includes(c.st)).forEach(c=>n.push({ts:c.ts,i:'alert',t:T('Priority 1: ','أولوية 1: ')+lb(CALLTYPES,c.type)+' — '+lb(LOCS.map(l=>l),c.loc),to:'dispatch',call:c.id}));
+  S.calls.filter(c=>c.st==='pending').slice(0,3).forEach(c=>n.push({ts:c.ts,i:'radio',t:T('Pending call ','بلاغ معلّق ')+c.id,to:'dispatch',call:c.id}));
+  if(can('approve'))S.reports.filter(r=>r.status==='pending').slice(0,3).forEach(r=>n.push({ts:r.ts,i:'file',t:T('Awaiting approval: ','بانتظار الاعتماد: ')+r.id,to:'reports',rep:r.id}));
+  if(can('ia'))S.cases.filter(c=>['open','investigating'].includes(c.st)).slice(0,2).forEach(c=>n.push({ts:new Date(c.date+'T12:00:00').getTime(),i:'shield',t:T('IA case active: ','قضية شؤون داخلية نشطة: ')+c.id,to:'ia'}));
+  S.sessions.filter(s=>s.status==='scheduled').slice(0,2).forEach(s=>n.push({ts:Date.now()-3*3600000,i:'cap',t:T('Training: ','تدريب: ')+lb(COURSES,s.course)+' · '+fD(s.date),to:'training'}));
+  S.ann.filter(a=>a.pin).forEach(a=>n.push({ts:a.ts,i:'mega',t:tx(a.title),to:'hub'}));
+  return n.sort((a,b)=>b.ts-a.ts);
+}
+function topHTML(){
+  const n=notifs(),unread=n.filter(x=>x.ts>S.settings.readAt).length,d=UI.drop;
+  return `<button class="icon-btn only-m" data-act="navopen" aria-label="${T('Menu','القائمة')}">${ic('menu')}</button>
+  <div class="search">${ic('search')}<input id="gq" type="search" placeholder="${T('Search officers, calls, reports…','ابحث عن عسكري أو بلاغ أو تقرير…')}" value="${esc(UI.q)}" autocomplete="off" aria-label="${T('Global search','بحث عام')}"><div class="drop" id="sr" hidden></div></div>
+  <div class="grow hide-m"></div><span class="hide-m">${simTag()}</span>
+  <button class="icon-btn" data-act="lang" title="${T('العربية','English')}" aria-label="language">${ic('globe')}</button>
+  <button class="icon-btn" data-act="theme" aria-label="theme">${ic(S.settings.theme==='dark'?'sun':'moon')}</button>
+  <div class="dropwrap"><button class="icon-btn" data-act="drop" data-d="quick" aria-label="${T('Quick actions','إجراءات سريعة')}">${ic('plus')}</button>${d==='quick'?`<div class="drop" style="min-width:240px"><h4>${T('Quick actions','إجراءات سريعة')}</h4>${[['newcall',T('New dispatch call','بلاغ جديد'),'radio'],['newreport',T('New incident report','تقرير حادث جديد'),'file'],['newshift',T('New shift report','تقرير شفت جديد'),'clock'],['addoff',T('Add officer','إضافة عسكري'),'user'],['newann',T('Post announcement','نشر تعميم'),'mega'],['newsess',T('Schedule training','جدولة تدريب'),'cap'],['newcase',T('Open IA case','فتح قضية شؤون داخلية'),'shield']].map(a=>`<button class="row" data-act="${a[0]}">${ic(a[2],16)}${esc(a[1])}</button>`).join('')}</div>`:''}</div>
+  <div class="dropwrap"><button class="icon-btn" data-act="drop" data-d="notif" aria-label="${T('Notifications','الإشعارات')}">${ic('bell')}${unread?`<span class="dot">${unread}</span>`:''}</button>${d==='notif'?`<div class="drop"><h4>${T('Notifications','الإشعارات')} <button class="btn sm" style="float:inline-end" data-act="readall">${T('Mark all read','تحديد الكل كمقروء')}</button></h4>${n.length?n.slice(0,12).map(x=>`<button class="row" data-act="notgo" data-to="${x.to}" data-call="${x.call||''}" data-rep="${x.rep||''}"><span style="color:${x.ts>S.settings.readAt?'var(--gold2)':'var(--muted)'}">${ic(x.i,17)}</span><span>${esc(x.t)}<small>${ago(x.ts)}</small></span></button>`).join(''):`<div class="empty" style="margin:10px">${T('No notifications','لا توجد إشعارات')}</div>`}</div>`:''}</div>
+  <div class="dropwrap"><button class="icon-btn" data-act="drop" data-d="prof" aria-label="${T('Profile','الملف الشخصي')}">${ic('user')}</button>${d==='prof'?profDrop():''}</div>`;
+}
+function renderTop(){$('#top').innerHTML=topHTML();const g=$('#gq');if(g&&UI.q&&document.activeElement!==g){}}
+function render(){
+  if(!AUTH.ok){renderLogin();return}
+  $('#login').hidden=true;$('#app').hidden=false;
+  const h=document.documentElement;h.lang=LANG;h.dir=LANG==='ar'?'rtl':'ltr';h.dataset.theme=S.settings.theme;
+  $('#app').className='app'+(S.settings.collapsed?' collapsed':'')+(UI.navOpen?' open':'');
+  $('#side').innerHTML=sideHTML();renderTop();
+  const V={ranks:vRanks,dashboard:vDashboard,officers:vOfficers,officer:()=>vOfficer(UI.arg),dispatch:vDispatch,patrol:vPatrol,reports:vReports,training:vTraining,ia:vIA,analytics:vAnalytics,hub:vHub,setup:vSetup};
+  const gate={ia:'ia',analytics:'analytics',setup:'setup',ranks:'setup'}[UI.view];
+  $('#main').innerHTML=gate&&!can(gate)?lockView():(V[UI.view]||vDashboard)();
+  document.title=(tx(S.settings.dept)||'LSPD')+' — '+T('Operations Center','مركز العمليات');
+}
+const lockView=()=>`<div class="card lock">${ic('lock',40)}<h1 class="pt" style="margin-top:12px">${T('Restricted area','منطقة مقيدة')}</h1><p class="mut">${T('Your current role does not have access to this section. Switch role from the profile menu (demo) or ask Command Staff.','دورك الحالي لا يملك صلاحية الوصول لهذا القسم. بدّل الدور من قائمة الملف الشخصي (تجريبي) أو تواصل مع القيادة.')}</p><button class="btn pri" data-act="go" data-to="dashboard">${T('Back to dashboard','العودة للوحة القيادة')}</button></div>`;
+function commit(){save();render()}
+
+/* search */
+function searchRes(q){
+  q=q.trim().toLowerCase();if(q.length<2)return[];const out=[],m=(...a)=>a.join(' ').toLowerCase().includes(q);
+  S.officers.filter(o=>m(o.id,o.name.en,o.name.ar,o.callsign,o.badge)).slice(0,4).forEach(o=>out.push({g:T('Officers','العساكر'),t:o.name[LANG],s:o.id+' · '+o.callsign,a:'go',v:'officer/'+o.id}));
+  S.calls.filter(c=>m(c.id,CALLTYPES[c.type][0],CALLTYPES[c.type][1],LOCS[c.loc][0],LOCS[c.loc][1])).slice(0,4).forEach(c=>out.push({g:T('Dispatch calls','البلاغات'),t:c.id+' · '+lb(CALLTYPES,c.type),s:lb(LOCS.map?Object.fromEntries(LOCS.map((l,i)=>[i,l])):{},c.loc),a:'call',v:c.id}));
+  S.reports.filter(r=>m(r.id,nm(r.officer))).slice(0,4).forEach(r=>out.push({g:T('Reports','التقارير'),t:r.id,s:nm(r.officer),a:'rep',v:r.id}));
+  if(can('ia'))S.cases.filter(c=>m(c.id,nm(c.subj))).slice(0,3).forEach(c=>out.push({g:T('Internal Affairs','الشؤون الداخلية'),t:c.id,s:nm(c.subj),a:'iacase',v:c.id}));
+  S.ann.filter(a=>m(a.title.en,a.title.ar)).slice(0,2).forEach(a=>out.push({g:T('Announcements','التعاميم'),t:tx(a.title),s:'',a:'go',v:'hub'}));
+  return out;
+}
+function showSearch(){
+  const box=$('#sr');if(!box)return;const r=searchRes(UI.q);
+  if(!UI.q||UI.q.trim().length<2){box.hidden=true;return}
+  let g='',h='';r.forEach((x,i)=>{if(x.g!==g){g=x.g;h+=`<h4>${esc(g)}</h4>`}h+=`<button class="row" data-act="sr" data-a="${x.a}" data-v="${esc(x.v)}"><span>${esc(x.t)}<small>${esc(x.s)}</small></span></button>`});
+  box.innerHTML=h||`<div class="empty" style="margin:10px">${T('No results','لا نتائج')}</div>`;box.hidden=false;
+}
+
+/* ================= call / unit logic ================= */
+const openCall=c=>['pending','dispatched','onscene'].includes(c.st);
+const gC=id=>S.calls.find(c=>c.id===id);
+const gU=id=>S.units.find(u=>u.id===id);
+const zoneOf=c=>LOCS[c.loc][2];
+const lname=i=>LOCS[i][LANG==='ar'?1:0];
+function logC(c,en,ar){c.log.push({ts:Date.now(),t:{en,ar}})}
+function setSt(c,st,quiet){
+  const old=c.st;c.st=st;const now=Date.now();
+  if(st==='dispatched'){c.dts=c.dts||now;logC(c,'Units dispatched: '+c.units.join(', '),'تم إرسال الوحدات: '+c.units.join('، '))}
+  if(st==='onscene'){if(c.rt==null)c.rt=Math.max(60,Math.round((now-c.ts)/1000));logC(c,'First unit on scene','وصول أول وحدة إلى الموقع')}
+  if(st==='followup')logC(c,'Marked for follow-up','تم تحويل البلاغ للمتابعة');
+  if(st==='closed'){c.closedTs=now;logC(c,'Call closed','تم إغلاق البلاغ')}
+  if(st==='pending'&&old==='closed'){c.closedTs=null;logC(c,'Call reopened','أُعيد فتح البلاغ')}
+  syncUnits(S);
+}
+function newCall(v){
+  const c={id:'C-26-'+String(++S.seq.call).padStart(4,'0'),ts:Date.now(),type:v.type,pr:+v.pr,loc:+v.loc,caller:{en:v.caller||'Anonymous',ar:v.caller||'مجهول'},st:'pending',units:[],disp:v.disp||(S.officers.find(o=>o.status==='dispatch')||{}).id||'',notes:v.note?[{ts:Date.now(),by:S.settings.role,t:v.note}]:[],log:[],rt:null};
+  c.log.push({ts:c.ts,t:{en:'Call received',ar:'تم استلام البلاغ'}});
+  S.calls.unshift(c);return c;
+}
+function assignUnit(c,uid){
+  if(!uid||c.units.includes(uid))return;c.units.push(uid);
+  if(c.st==='pending')setSt(c,'dispatched');else{logC(c,'Unit added: '+uid,'تمت إضافة وحدة: '+uid);syncUnits(S)}
+}
+function simCall(){
+  const types=Object.keys(CALLTYPES),t=types[Math.floor(Math.random()*types.length)];
+  const c=newCall({type:t,pr:CALLTYPES[t][3],loc:Math.floor(Math.random()*LOCS.length),caller:'',disp:(S.officers.filter(o=>o.status==='dispatch')[Math.floor(Math.random()*3)]||{}).id});
+  c.sim=true;c.caller={en:'Anonymous',ar:'مجهول'};c.log[0].t={en:'Call received (simulated)',ar:'تم استلام البلاغ (محاكاة)'};
+}
+function tick(){
+  if(!AUTH.ok||!S.settings.sim)return;
+  const pend=S.calls.filter(c=>c.st==='pending').length;
+  if(Math.random()<.35&&pend<5)simCall();
+  S.calls.filter(c=>c.sim&&c.st==='dispatched'&&Date.now()-c.dts>35000&&Math.random()<.5).forEach(c=>setSt(c,'onscene'));
+  S.calls.filter(c=>c.sim&&c.st==='onscene'&&Date.now()-c.ts>150000&&Math.random()<.35).forEach(c=>setSt(c,'closed'));
+  S.units.forEach(u=>{if(Math.random()<.5){u.px=Math.min(.9,Math.max(.1,u.px+(Math.random()-.5)*.12));u.py=Math.min(.85,Math.max(.25,u.py+(Math.random()-.5)*.12))}if(u.status==='available'&&Math.random()<.06){const z=Object.keys(ZONES);u.zone=z[Math.floor(Math.random()*z.length)]}});
+  syncUnits(S);save();
+  const a=document.activeElement,typing=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName);
+  if(!$('#modal').firstChild&&!typing&&['dashboard','dispatch','patrol'].includes(UI.view)){const y=window.scrollY;$('#main').innerHTML=({dashboard:vDashboard,dispatch:vDispatch,patrol:vPatrol})[UI.view]();window.scrollTo(0,y);$('#side').innerHTML=sideHTML()}
+}
+
+/* ================= event delegation ================= */
+const ACT={
+  go:d=>go(d.to),close:()=>closeModal(),navopen:()=>{UI.navOpen=true;render()},navclose:()=>{UI.navOpen=false;render()},
+  collapse:()=>{S.settings.collapsed=!S.settings.collapsed;commit()},
+  lang:()=>{LANG=LANG==='ar'?'en':'ar';S.settings.lang=LANG;commit()},
+  theme:()=>{S.settings.theme=S.settings.theme==='dark'?'light':'dark';commit()},
+  drop:d=>{UI.drop=UI.drop===d.d?null:d.d;renderTop()},
+  readall:()=>{S.settings.readAt=Date.now();save();renderTop()},
+  notgo:d=>{UI.drop=null;go(d.to);if(d.call)openCallM(d.call);if(d.rep)openReport(d.rep)},
+  role:d=>{if(AUTH.user)return;S.settings.role=d.r;UI.drop=null;if(['ia','analytics','setup','ranks'].includes(UI.view)&&!can(UI.view==='ranks'?'setup':UI.view))UI.view='dashboard';commit();toast(T('Role: ','الدور: ')+lb(ROLES,d.r))},
+  sr:d=>{UI.q='';$('#sr').hidden=true;$('#gq').value='';if(d.a==='go')go(d.v);else if(d.a==='call'){go('dispatch');openCallM(d.v)}else if(d.a==='rep'){go('reports');openReport(d.v)}else if(d.a==='iacase'){go('ia');openCase(d.v)}},
+  newcall:()=>{UI.drop=null;renderTop();callForm()},newreport:()=>{UI.drop=null;renderTop();reportForm()},newshift:()=>{UI.drop=null;renderTop();shiftForm()},addoff:()=>{UI.drop=null;renderTop();officerForm()},newann:()=>{UI.drop=null;renderTop();annForm()},newsess:()=>{UI.drop=null;renderTop();sessForm()},newcase:()=>{UI.drop=null;renderTop();caseForm()}
+};
+document.addEventListener('click',e=>{
+  const ov=e.target;if(ov.classList&&ov.classList.contains('ov')){closeModal();return}
+  const el=e.target.closest('[data-act]');
+  if(el&&ACT[el.dataset.act]){ACT[el.dataset.act](el.dataset,el,e)}
+  if(UI.drop&&!e.target.closest('.dropwrap')){UI.drop=null;renderTop()}
+  const sr=$('#sr');if(sr&&!sr.hidden&&!e.target.closest('.search'))sr.hidden=true;
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if($('#modal').lastChild)closeModal();else if(UI.drop){UI.drop=null;renderTop()}}
+  if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.nav a')){e.preventDefault();e.target.click()}
+});
+document.addEventListener('submit',e=>{if(e.target.id==='mform'){e.preventDefault();if(UI.formCb){const r=UI.formCb(new FormData(e.target));if(r!==false){closeModal()}}}});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='gq'){UI.q=t.value;showSearch()}
+  else if(t.dataset.bind==='offq'){UI.off.q=t.value;refreshOff()}
+});
+const CHG={
+  offf:el=>{UI.off[el.dataset.k]=el.type==='checkbox'?el.checked:el.value;refreshOff()},
+  ustat:el=>{const u=gU(el.dataset.u);if(!need('dispatch')){render();return}u.status=el.value;logUnit(u);commit()},
+  ostat:el=>{if(!need('edit')){render();return}const o=gO(el.dataset.o),was=isOn(o);o.status=el.value;const now=isOn(o);if(now){o.last=dAgo(0);if(!was)o.duty.unshift({date:dAgo(0),start:fT(Date.now()),t0:Date.now(),hours:0,late:false,act:['Patrol','دورية'],open:true})}else if(was&&o.duty[0]&&o.duty[0].open){o.duty[0].open=false;o.duty[0].hours=Math.max(1,Math.round((Date.now()-(o.duty[0].t0||Date.now()))/3600000))}commit()},
+  pz:el=>{UI.pz=el.value;render()}
+};
+function logUnit(u){}
+const needOff=()=>{if(S.officers.some(o=>o.status!=='archived'))return true;toast(T('Add at least one officer first.','أضف عسكري واحد على الأقل أولاً.'),'err');return false};
+document.addEventListener('change',e=>{
+  const el=e.target.closest('[data-chg]');if(el&&CHG[el.dataset.chg])CHG[el.dataset.chg](el);
+  if(e.target.id==='f_type'&&UI.formKind==='call'){const p=$('#f_pr');if(p)p.value=CALLTYPES[e.target.value][3]}
+});
+
+/* ================= authentication (Supabase Auth over REST) ================= */
+const CFG=()=>!!(SUPABASE_URL&&SUPABASE_ANON_KEY);
+const AKEY='lspd-auth-clean-v1';
+function profDrop(){
+  const demo=!AUTH.user;
+  return `<div class="drop" style="min-width:270px"><h4>${esc(AUTH.user?AUTH.user.username:T('Demo mode','وضع تجريبي'))}</h4><div style="padding:4px 14px 10px" class="mut">${esc(lb(ROLES,S.settings.role))}${demo?' — '+T('you can switch roles for testing.','تقدر تبدّل الأدوار للتجربة.'):''}</div>${demo?Object.keys(ROLES).map(k=>`<button class="row" data-act="role" data-r="${k}">${S.settings.role===k?ic('check',16):'<span style="width:16px"></span>'}${esc(lb(ROLES,k))}</button>`).join(''):''}<button class="row" data-act="go" data-to="setup">${ic('cog',16)}${T('Setup & Data','الإعدادات والبيانات')}</button><button class="row" data-act="logout">${ic('x',16)}${T('Sign out','تسجيل الخروج')}</button></div>`;
+}
+function renderLogin(){
+  const h=document.documentElement;h.lang=LANG;h.dir=LANG==='ar'?'rtl':'ltr';h.dataset.theme=S.settings.theme;
+  $('#app').hidden=true;const L=$('#login');L.hidden=false;
+  const u=esc(UI.lgu||'');
+  L.innerHTML=`<div class="lg-card"><div class="lg-brand">${BADGE}<h1>LSPD<br>${T('Operations Center','مركز العمليات')}</h1><p>${T('Roster, dispatch, reports, training and command analytics for your FiveM department.','الجدول والدسباتش والتقارير والتدريب وتحليلات القيادة لقسمك في FiveM.')}</p></div>
+  <form class="lg-form" id="lgform" autocomplete="on"><div class="lg-top"><h2>${T('Sign in','تسجيل الدخول')}</h2><button type="button" class="btn sm" data-act="lang">${T('العربية','English')}</button></div>
+  ${CFG()?'':`<div class="lg-note">${T('Supabase is not connected yet. Set SUPABASE_URL and SUPABASE_ANON_KEY at the top of the script, or continue in demo mode.','لم يتم ربط Supabase بعد. ضع SUPABASE_URL و SUPABASE_ANON_KEY في أعلى السكربت، أو تابع بالوضع التجريبي.')}</div>`}
+  <div class="fld"><label for="lgu">${T('Username','اسم المستخدم')}</label><input id="lgu" name="u" value="${u}" autocomplete="username" autocapitalize="none" required ${CFG()?'':'disabled'}></div>
+  <div class="fld"><label for="lgp">${T('Password','كلمة المرور')}</label><input id="lgp" name="p" type="password" autocomplete="current-password" required ${CFG()?'':'disabled'}></div>
+  <div class="lg-err" id="lgerr" role="alert"></div>
+  <button class="lg-btn" id="lgbtn" type="submit" ${CFG()?'':'disabled'}>${T('Sign in','دخول')}</button>
+  ${CFG()?'':`<button class="btn" type="button" data-act="demo">${T('Continue in demo mode','المتابعة بالوضع التجريبي')}</button>`}</form></div>`;
+  const f=$('#lgu');if(f&&CFG()&&!UI.lgu)f.focus();
+}
+async function startSession(j){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=username,role,is_active&id=eq.${encodeURIComponent(j.user.id)}`,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+j.access_token}});
+  const rows=await r.json();
+  if(!r.ok||!Array.isArray(rows)||!rows.length||!rows[0].is_active)throw new Error('inactive');
+  AUTH.user={id:j.user.id,username:rows[0].username,role:rows[0].role,token:j.access_token};AUTH.ok=true;AUTH.demo=false;
+  try{localStorage.setItem(AKEY,JSON.stringify({refresh:j.refresh_token}))}catch(e){}
+  S.settings.role=rows[0].role;UI.lgu='';commit();
+}
+async function doLogin(u,p){
+  const err=$('#lgerr'),btn=$('#lgbtn');btn.disabled=true;err.textContent='';UI.lgu=u;
+  try{
+    const email=u.includes('@')?u:u.toLowerCase().replace(/\s+/g,'')+'@lspd.local';
+    const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:p})});
+    if(!r.ok)throw new Error('cred');
+    await startSession(await r.json());
+  }catch(e){
+    const m=e&&e.message;
+    err.textContent=m==='cred'?T('Invalid username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.'):m==='inactive'?T('Your account has not been activated by Command yet.','لم تقم القيادة بتفعيل حسابك بعد.'):T('Cannot reach the server. Check the connection settings.','تعذّر الاتصال بالخادم. تحقق من إعدادات الاتصال.');
+    btn.disabled=false;
+  }
+}
+async function tryRestore(){
+  if(!CFG())return;
+  try{
+    const st=JSON.parse(localStorage.getItem(AKEY)||'null');if(!st||!st.refresh)return;
+    const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:st.refresh})});
+    if(!r.ok){localStorage.removeItem(AKEY);return}
+    await startSession(await r.json());
+  }catch(e){}
+}
+ACT.demo=()=>{if(CFG())return;AUTH.ok=true;AUTH.demo=true;render()};
+ACT.logout=async()=>{
+  const t=AUTH.user&&AUTH.user.token;AUTH.ok=false;AUTH.user=null;AUTH.demo=false;UI.drop=null;
+  try{localStorage.removeItem(AKEY)}catch(e){}
+  if(t&&CFG()){try{await fetch(SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+t}})}catch(e){}}
+  render();
+};
+document.addEventListener('submit',e=>{if(e.target.id==='lgform'){e.preventDefault();const f=new FormData(e.target);doLogin((f.get('u')||'').toString().trim(),(f.get('p')||'').toString())}});
+/* ================= Dashboard ================= */
+const ph=(title,sub,acts)=>`<div class="ph"><div><h1 class="pt">${title}</h1>${sub?`<div class="sub">${sub}</div>`:''}</div><div class="acts">${acts||''}</div></div>`;
+const kpi=(n,l,to,c)=>`<div class="card kpi ${c||''}" data-act="go" data-to="${to}" role="link" tabindex="0"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`;
+function shiftName(){const h=new Date().getHours();return h>=6&&h<14?['Day Watch','وردية النهار']:h>=14&&h<22?['Evening Watch','الوردية المسائية']:['Night Watch','وردية الليل']}
+const startCard=()=>S.officers.length?'':`<div class="card" style="margin-bottom:14px;border-color:var(--gold)"><h3>${T('Getting started','البداية')}</h3><p class="mut" style="margin:0 0 12px">${T('The system is empty. Start by adding your officers, then create your patrol units, and you are ready to dispatch.','النظام فاضي. ابدأ بإضافة العساكر ثم أنشئ وحدات الدوريات وبعدها تقدر تستقبل البلاغات.')}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn gold" data-act="addoff">${ic('plus',16)}${T('Add officer','إضافة عسكري')}</button><button class="btn" data-act="go" data-to="dispatch">${ic('radio',16)}${T('Open Dispatch','فتح الدسباتش')}</button><button class="btn" data-act="go" data-to="setup">${ic('cog',16)}${T('Setup','الإعدادات')}</button></div></div>`;
+function vDashboard(){
+  const act=S.officers.filter(o=>o.status!=='archived'),on=act.filter(isOn),openC=S.calls.filter(openCall);
+  const unitsAct=S.units.filter(u=>u.status!=='unavailable').length;
+  const pend=S.reports.filter(r=>r.status==='draft'||r.status==='pending').length,appr=S.reports.filter(r=>r.status==='pending').length;
+  const sess=S.sessions.filter(s=>s.status==='scheduled').length,p1=openC.filter(c=>c.pr===1).length;
+  const days=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-(6-i)*DAY);return d.toLocaleDateString(loc(),{weekday:'short'})});
+  const dk=[...Array(7)].map((_,i)=>isoDay(Date.now()-(6-i)*DAY));const actv=days.map((l,i)=>({l,v:i===6?on.length:act.filter(o=>o.duty.some(x=>x.date===dk[i])).length,c:i===6?'var(--gold)':'var(--steel)'}));
+  const stCount=k=>S.calls.filter(c=>c.st===k).length;
+  const sh={day:0,evening:0,night:0},shc={day:0,evening:0,night:0};on.forEach(o=>sh[o.shift]++);S.calls.forEach(c=>{const h=new Date(c.ts).getHours();shc[h>=6&&h<14?'day':h>=14&&h<22?'evening':'night']++});
+  const ev=S.calls.flatMap(c=>c.log.map(l=>({...l,c}))).sort((a,b)=>b.ts-a.ts).slice(0,8);
+  const up=S.events.filter(e=>e.date>=isoDay(Date.now())).sort((a,b)=>a.date<b.date?-1:1).slice(0,5);
+  const sn=shiftName(),cmd=on.slice().sort((a,b)=>a.rank-b.rank)[0];
+  return `<div class="banner"><div class="clock"><span data-clock>${new Date().toLocaleTimeString(loc(),{hour12:false})}</span><small>${new Date().toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</small></div>
+   <div class="mid"><div><small>${T('Current watch','الوردية الحالية')}</small><b>${esc(sn[LANG==='ar'?1:0])}</b></div><div class="g"><small>${T('Watch commander','قائد الوردية')}</small><b>${cmd?esc(cmd.name[LANG]):'—'}</b></div><div><small>${T('Priority 1 active','أولوية 1 نشطة')}</small><b style="color:${p1?'#ff7b80':'#7fe0b6'}">${p1}</b></div><div><small>${T('Server','السيرفر')}</small><b>${esc(S.settings.dept.server)}</b></div></div>
+   <div>${simTag()}</div></div>
+  ${startCard()}<div class="grid kpis">
+   ${kpi(act.length,T('Registered officers','العساكر المسجلون'),'officers','gold')}${kpi(on.length,T('On duty','على رأس العمل'),'officers','green')}${kpi(act.length-on.length,T('Off duty','خارج الدوام'),'officers')}
+   ${kpi(unitsAct,T('Active patrol units','وحدات دورية نشطة'),'patrol','green')}${kpi(act.filter(o=>o.status==='dispatch').length,T('Dispatch personnel','طاقم الدسباتش'),'dispatch')}${kpi(openC.length,T('Current incidents','البلاغات الجارية'),'dispatch','red')}
+   ${kpi(pend,T('Pending reports','تقارير معلقة'),'reports','amber')}${kpi(appr,T('Awaiting supervisor approval','بانتظار اعتماد المشرف'),'reports','amber')}${kpi(sess,T('Training sessions scheduled','دورات تدريب مجدولة'),'training')}
+  </div>
+  <div class="grid c3" style="margin-top:14px">
+   <div class="card"><h3>${T('Officer activity — last 7 days','نشاط العساكر — آخر 7 أيام')}<small>${T('officers on duty','عساكر على رأس العمل')}</small></h3>${barChart(actv)}</div>
+   <div class="card"><h3>${T('Incident status','حالة البلاغات')}<small>${T('all calls','كل البلاغات')}</small></h3>${donut(['pending','dispatched','onscene','followup','closed'].map(k=>({l:lb(CST,k),v:stCount(k),c:{pending:'var(--red)',dispatched:'var(--amber)',onscene:'#e07b2a',followup:'var(--blue)',closed:'var(--steel)'}[k]})))}</div>
+   <div class="card"><h3>${T('Shift activity today','نشاط الورديات اليوم')}<small>${T('on duty · calls handled','على رأس العمل · بلاغات')}</small></h3>${hbars([['day',['Day','النهار']],['evening',['Evening','المسائية']],['night',['Night','الليل']]].map(([k,n])=>({l:n[LANG==='ar'?1:0]+' · '+shc[k],v:sh[k]})),'var(--gold)')}<div class="sub">${T('Bars show officers currently on duty per watch.','الأعمدة تمثل عدد العساكر على رأس العمل لكل وردية.')}</div></div>
+  </div>
+  <div class="grid c2" style="margin-top:14px">
+   <div class="card"><h3>${T('Recent dispatch events','آخر أحداث الدسباتش')}<span>${simTag()}</span></h3><div class="feed">${ev.map(e=>`<div class="fi"><time>${fT(e.ts)}</time><span><a data-act="opencall" data-id="${e.c.id}">${e.c.id}</a> · ${esc(lb(CALLTYPES,e.c.type))} — ${esc(tx(e.t))}</span></div>`).join('')}</div></div>
+   <div class="card"><h3>${T('Latest supervisor decisions','آخر قرارات المشرفين')}</h3><div class="feed">${S.decisions.slice(0,6).map(d=>`<div class="fi"><time>${ago(d.ts).replace(T(' ago',''),'')}</time><span>${bd(d.act==='approved'?T('Approved','معتمد'):T('Returned','أعيد'),d.act==='approved'?'green':'red')} <a data-act="openrep" data-id="${d.ref}">${d.ref}</a> — ${esc(nm(d.by))}<br><small class="mut">${esc(tx(d.c))}</small></span></div>`).join('')||empty(T('No decisions yet','لا توجد قرارات'))}</div></div>
+   <div class="card"><h3>${T('Upcoming department events','الفعاليات القادمة')}<a class="mut" style="font-size:13px;cursor:pointer" data-act="go" data-to="hub">${T('Calendar','التقويم')}</a></h3><div class="tl">${up.map(e=>`<div class="it ${e.type==='ceremony'?'':'s'}"><b>${esc(tx(e.title))}</b><small>${fD(e.date)} · ${e.time} · ${esc(lb(EVT,e.type))}</small></div>`).join('')||empty(T('Nothing scheduled','لا فعاليات'))}</div></div>
+   <div class="card"><h3>${T('Latest announcements','آخر التعاميم')}<a class="mut" style="font-size:13px;cursor:pointer" data-act="go" data-to="hub">${T('All','الكل')}</a></h3>${[...S.ann].sort((a,b)=>b.pin-a.pin||b.ts-a.ts).slice(0,3).map(a=>`<div style="margin-bottom:12px"><b>${a.pin?`<span class="gold-t">${ic('mega',15)}</span> `:''}${esc(tx(a.title))}</b><div class="mut" style="font-size:13px">${esc(tx(a.body))}</div><small class="mut">${ago(a.ts)} · ${esc(nm(a.by))}</small></div>`).join('')}</div>
+  </div>`;
+}
+ACT.opencall=d=>{go('dispatch');openCallM(d.id)};
+ACT.openrep=d=>{go('reports');openReport(d.id)};
+
+/* ================= Officers ================= */
+function offFiltered(){
+  const f=UI.off;let a=S.officers.filter(o=>f.arch||o.status!=='archived');
+  if(f.q){const q=f.q.toLowerCase();a=a.filter(o=>(o.id+' '+o.name.en+' '+o.name.ar+' '+o.callsign+' '+o.badge).toLowerCase().includes(q))}
+  if(f.div)a=a.filter(o=>o.div===f.div);if(f.st)a=a.filter(o=>o.status===f.st);if(f.rank!=='')a=a.filter(o=>String(o.rank)===String(f.rank));
+  const K={id:o=>o.id,name:o=>o.name[LANG],callsign:o=>o.callsign,rank:o=>o.rank,div:o=>lb(DIVS,o.div),status:o=>lb(STAT,o.status),sup:o=>sup(o),join:o=>o.join,last:o=>o.last}[f.sort]||(o=>o.id);
+  return a.sort((x,y)=>{const A=K(x),B=K(y);return(A>B?1:A<B?-1:0)*f.dir});
+}
+function offTable(){
+  const a=offFiltered(),f=UI.off;
+  const th=(k,l)=>`<th class="s" data-act="offsort" data-k="${k}" aria-sort="${f.sort===k?(f.dir>0?'ascending':'descending'):'none'}">${esc(l)}${f.sort===k?(f.dir>0?' ▲':' ▼'):''}</th>`;
+  return `<div class="scroll"><table class="tbl"><thead><tr>${th('id',T('ID','الرقم'))}${th('name',T('Full name','الاسم الكامل'))}${th('callsign',T('Callsign','الكول ساين'))}${th('rank',T('Rank','الرتبة'))}${th('div',T('Division','القسم'))}${th('status',T('Duty status','حالة الدوام'))}${th('sup',T('Supervisor','المشرف'))}<th>${T('Qualifications','المؤهلات')}</th>${th('join',T('Joined','الانضمام'))}${th('last',T('Last shift','آخر شفت'))}<th>${T('Actions','الإجراءات')}</th></tr></thead><tbody>${a.map(o=>`<tr class="click" data-act="go" data-to="officer/${o.id}"><td>${o.id}</td><td><div class="who">${avatar(o)}<div><b>${esc(o.name[LANG])}</b><small>${o.badge}</small></div></div></td><td><b>${o.callsign}</b></td><td>${rankB(o.rank)}</td><td>${esc(lb(DIVS,o.div))}</td><td>${stB(STAT,o.status)}</td><td>${esc(sup(o))}</td><td>${o.quals.slice(0,2).map(q=>`<span class="chip">${esc(lb(QUALS,q))}</span>`).join('')}${o.quals.length>2?`<span class="chip">+${o.quals.length-2}</span>`:''}</td><td>${fD(o.join)}</td><td>${fD(o.last)}</td><td class="act" data-stop><button class="btn sm ico" data-act="go" data-to="officer/${o.id}" title="${T('View record','عرض السجل')}">${ic('eye',15)}</button> <button class="btn sm ico" data-act="editoff" data-id="${o.id}" title="${T('Edit','تعديل')}">${ic('edit',15)}</button> <button class="btn sm ico" data-act="rankchg" data-id="${o.id}" title="${T('Rank change','تغيير رتبة')}">${ic('up',15)}</button> ${o.status==='archived'?`<button class="btn sm ico" data-act="restore" data-id="${o.id}" title="${T('Restore','استعادة')}">${ic('check',15)}</button>`:`<button class="btn sm ico" data-act="archive" data-id="${o.id}" title="${T('Archive','أرشفة')}">${ic('archive',15)}</button>`}</td></tr>`).join('')}</tbody></table></div>${a.length?'':empty(T('No officers match the filters.','لا يوجد عساكر مطابقون.'))}<div class="sub" style="margin-top:8px">${T('Showing','عرض')} ${a.length} ${T('of','من')} ${S.officers.length}</div>`;
+}
+function refreshOff(){const e=$('#off-table');if(e)e.innerHTML=offTable()}
+function vOfficers(){
+  const f=UI.off;
+  return ph(T('Officer Directory','جدول العساكر'),T('Roster, duty status, ranks and qualifications — fictional roleplay personnel.','قائمة العساكر وحالة الدوام والرتب والمؤهلات — شخصيات رول بلاي افتراضية.'),`<button class="btn" data-act="exportoff">${ic('dl',16)}${T('Export CSV','تصدير CSV')}</button><button class="btn gold" data-act="addoff">${ic('plus',16)}${T('Add officer','إضافة عسكري')}</button>`)+
+  `<div class="card"><div class="filters"><input data-bind="offq" type="search" placeholder="${T('Search name, ID, callsign…','بحث بالاسم أو الرقم أو الكول ساين…')}" value="${esc(f.q)}" aria-label="search">
+   <select data-chg="offf" data-k="div" aria-label="division"><option value="">${T('All divisions','كل الأقسام')}</option>${opt(DIVS).map(([k,l])=>`<option value="${k}" ${f.div===k?'selected':''}>${esc(l)}</option>`).join('')}</select>
+   <select data-chg="offf" data-k="st" aria-label="status"><option value="">${T('All statuses','كل الحالات')}</option>${opt(STAT).map(([k,l])=>`<option value="${k}" ${f.st===k?'selected':''}>${esc(l)}</option>`).join('')}</select>
+   <select data-chg="offf" data-k="rank" aria-label="rank"><option value="">${T('All ranks','كل الرتب')}</option>${RANKS.map((r,i)=>`<option value="${i}" ${String(f.rank)===String(i)?'selected':''}>${esc(r[LANG==='ar'?1:0])}</option>`).join('')}</select>
+   <label class="ck mut"><input type="checkbox" data-chg="offf" data-k="arch" ${f.arch?'checked':''}> ${T('Show archived','عرض المؤرشفين')}</label></div>
+   <div id="off-table">${offTable()}</div></div>`;
+}
+ACT.offsort=d=>{const f=UI.off;if(f.sort===d.k)f.dir*=-1;else{f.sort=d.k;f.dir=1}refreshOff()};
+ACT.exportoff=()=>{if(!need('export'))return;const a=offFiltered();saveFile('lspd-officers-'+isoDay(Date.now())+'.csv',csv([['ID','Name (EN)','Name (AR)','Callsign','Badge','Rank','Division','Status','Supervisor','Qualifications','Joined','Last shift'],...a.map(o=>[o.id,o.name.en,o.name.ar,o.callsign,o.badge,RANKS[o.rank][0],DIVS[o.div][0],STAT[o.status][0],o.sup?gO(o.sup).name.en:'',o.quals.map(q=>QUALS[q][0]).join('; '),o.join,o.last])]))};
+ACT.addoff=()=>officerForm();ACT.editoff=d=>officerForm(d.id);
+ACT.archive=d=>{if(!need('edit'))return;const o=gO(d.id);o.prev=o.status;o.status='archived';commit();toast(T('Archived: ','تمت الأرشفة: ')+o.name[LANG],'ok')};
+ACT.restore=d=>{if(!need('edit'))return;const o=gO(d.id);o.status='off';commit();toast(T('Restored: ','تمت الاستعادة: ')+o.name[LANG],'ok')};
+ACT.rankchg=d=>rankForm(d.id);
+function officerForm(id){
+  if(!need('edit'))return;const o=id?gO(id):null;
+  const sups=S.officers.filter(x=>x.status!=='archived'&&canSup(x.rank)).map(x=>[x.id,x.name[LANG]+' · '+lb(RK,x.rank)]);
+  FM(o?T('Edit officer','تعديل عسكري'):T('Add officer','إضافة عسكري'),[
+   {k:'en',label:T('Full name (English)','الاسم (إنجليزي)'),val:o?o.name.en:'',req:1},{k:'ar',label:T('Full name (Arabic)','الاسم (عربي)'),val:o?o.name.ar:'',req:1},
+   {k:'callsign',label:T('Callsign','الكول ساين'),val:o?o.callsign:''},{k:'badge',label:T('Badge number','رقم الشارة'),val:o?o.badge:''},
+   {k:'rank',type:'select',label:T('Rank','الرتبة'),val:o?o.rank:RANKS.length-1,opts:RANKS.map((r,i)=>[i,r[LANG==='ar'?1:0]])},{k:'div',type:'select',label:T('Division','القسم'),val:o?o.div:'patrol',opts:opt(DIVS)},
+   {k:'status',type:'select',label:T('Duty status','حالة الدوام'),val:o?o.status:'off',opts:opt(STAT)},{k:'sup',type:'select',label:T('Assigned supervisor','المشرف المسؤول'),val:o?o.sup||'':'',opts:[['','—'],...sups]},
+   {k:'join',type:'date',label:T('Join date','تاريخ الانضمام'),val:o?o.join:isoDay(Date.now())},{k:'shift',type:'select',label:T('Watch','الوردية'),val:o?o.shift:'day',opts:[['day',T('Day','النهار')],['evening',T('Evening','المسائية')],['night',T('Night','الليل')]]},
+   {k:'quals',type:'multi',full:1,label:T('Training qualifications','المؤهلات التدريبية'),val:o?o.quals:[],opts:opt(QUALS)}],
+  v=>{
+   if(o){Object.assign(o,{name:{en:v.en,ar:v.ar},callsign:v.callsign||o.callsign,badge:v.badge||o.badge,div:v.div,status:v.status,sup:v.sup||null,join:v.join,shift:v.shift,quals:v.quals});
+     if(+v.rank!==o.rank){o.promos.push({rank:+v.rank,date:dAgo(0),by:null,reason:{en:'Rank updated via profile edit',ar:'تحديث الرتبة من تعديل الملف'}});o.rank=+v.rank}
+     toast(T('Officer updated','تم تحديث بيانات العسكري'),'ok')}
+   else{const n=S.officers.length;S.officers.push({id:OID(n),name:{en:v.en,ar:v.ar},callsign:v.callsign||('NEW-'+(10+n)),badge:v.badge||('B-'+(2100+n*7)),rank:+v.rank,div:v.div,status:v.status,sup:v.sup||null,quals:v.quals,join:v.join,last:v.join,shift:v.shift,promos:[{rank:+v.rank,date:v.join,by:null,reason:{en:'Joined the department',ar:'الانضمام إلى القسم'}}],duty:[],commends:[],warns:[],evals:[],notes:[]});toast(T('Officer added: ','تمت إضافة: ')+v.en,'ok')}
+   commit();});
+}
+function rankForm(id){
+  if(!need('edit'))return;const o=gO(id);
+  FM(T('Record rank change','تسجيل تغيير رتبة')+' — '+o.name[LANG],[{k:'rank',type:'select',label:T('New rank','الرتبة الجديدة'),val:Math.max(0,o.rank-1),opts:RANKS.map((r,i)=>[i,r[LANG==='ar'?1:0]])},{k:'date',type:'date',label:T('Effective date','تاريخ السريان'),val:isoDay(Date.now())},{k:'why',type:'textarea',full:1,label:T('Reason','السبب'),val:'',req:1}],v=>{
+   o.promos.push({rank:+v.rank,date:v.date,by:'LSPD-1001',reason:{en:v.why,ar:v.why}});o.rank=+v.rank;commit();toast(T('Rank change recorded','تم تسجيل تغيير الرتبة'),'ok')});
+}
+
+/* ---- officer profile ---- */
+function vOfficer(id){
+  const o=gO(id);if(!o)return empty(T('Officer not found','العسكري غير موجود'));
+  const tabs=[['info',T('Personal & department','المعلومات الشخصية والقسم')],['promo',T('Rank & promotions','الرتب والترقيات')],['duty',T('Duty & attendance','الدوام والحضور')],['train',T('Training & qualifications','التدريب والمؤهلات')],['rep',T('Reports & commendations','التقارير والتكريمات')],['notes',T('Administrative notes','ملاحظات إدارية')],['eval',T('Supervisor evaluations','تقييمات المشرف')]];
+  const t=UI.otab,reps=S.reports.filter(r=>r.officer===o.id);let b='';
+  const addBtn=(a,l)=>`<button class="btn sm" data-act="${a}" data-id="${o.id}">${ic('plus',14)}${l}</button>`;
+  if(t==='info')b=`<div class="kv"><div><small>${T('Officer ID','رقم العسكري')}</small><b>${o.id}</b></div><div><small>${T('Badge','الشارة')}</small><b>${o.badge}</b></div><div><small>${T('Callsign','الكول ساين')}</small><b>${o.callsign}</b></div><div><small>${T('Rank','الرتبة')}</small><b>${esc(lb(RK,o.rank))} (${RANKS[o.rank][2]})</b></div><div><small>${T('Division','القسم')}</small><b>${esc(lb(DIVS,o.div))}</b></div><div><small>${T('Supervisor','المشرف')}</small><b>${esc(sup(o))}</b></div><div><small>${T('Joined','الانضمام')}</small><b>${fD(o.join)}</b></div><div><small>${T('Last recorded shift','آخر شفت')}</small><b>${fD(o.last)}</b></div><div><small>${T('Watch','الوردية')}</small><b>${esc({day:T('Day','النهار'),evening:T('Evening','المسائية'),night:T('Night','الليل')}[o.shift])}</b></div></div><h3 style="margin-top:20px">${T('Qualifications','المؤهلات')}</h3>${o.quals.map(q=>`<span class="chip">${esc(lb(QUALS,q))}</span>`).join('')||empty(T('None recorded','لا شيء'))}<h3 style="margin-top:20px">${T('Service summary','ملخص الخدمة')}</h3><div class="kv"><div><small>${T('Commendations','التكريمات')}</small><b>${o.commends.length}</b></div><div><small>${T('Warnings','الإنذارات')}</small><b>${o.warns.length}</b></div><div><small>${T('Reports filed','التقارير المقدمة')}</small><b>${reps.length}</b></div><div><small>${T('Hours (last 8 shifts)','الساعات (آخر 8 شفتات)')}</small><b>${o.duty.reduce((a,x)=>a+x.hours,0)}</b></div></div>`;
+  if(t==='promo')b=`<div class="ct">${T('Rank history','سجل الرتب')}${can('edit')?addBtn('rankchg',T('Record rank change','تسجيل تغيير')):''}</div><div class="tl">${[...o.promos].reverse().map(p=>`<div class="it ${isCmd(p.rank)?'':'s'}"><b>${esc(lb(RK,p.rank))}</b><small>${fD(p.date)}${p.by?' · '+esc(nm(p.by)):''}</small><div class="mut">${esc(tx(p.reason))}</div></div>`).join('')}</div>`;
+  if(t==='duty'){const late=o.duty.filter(x=>x.late).length,hrs=o.duty.reduce((a,x)=>a+x.hours,0);b=`<div class="kv" style="margin-bottom:14px"><div><small>${T('Shifts (recorded)','الشفتات المسجلة')}</small><b>${o.duty.length}</b></div><div><small>${T('Total hours','إجمالي الساعات')}</small><b>${hrs}</b></div><div><small>${T('Late arrivals','حالات التأخر')}</small><b>${late}</b></div><div><small>${T('Attendance','الحضور')}</small><b>${o.duty.length?Math.round(100*(o.duty.length-late)/o.duty.length)+'%':'—'}</b></div></div><div class="scroll"><table class="tbl"><thead><tr><th>${T('Date','التاريخ')}</th><th>${T('Start','البداية')}</th><th>${T('Hours','الساعات')}</th><th>${T('Activity','النشاط')}</th><th>${T('Attendance','الحضور')}</th></tr></thead><tbody>${o.duty.map(x=>`<tr><td>${fD(x.date)}</td><td>${x.start}</td><td>${x.hours}</td><td>${esc(x.act[LANG==='ar'?1:0])}</td><td>${x.open?bd(T('In progress','جارٍ'),'green'):x.late?bd(T('Late','متأخر'),'amber'):bd(T('Present','حاضر'),'green')}</td></tr>`).join('')}</tbody></table></div>`}
+  if(t==='train')b=`<div class="ct">${T('Qualifications','المؤهلات')}${can('edit')?`<button class="btn sm" data-act="editquals" data-id="${o.id}">${ic('edit',14)}${T('Edit qualifications','تعديل المؤهلات')}</button>`:''}</div>${o.quals.map(q=>`<span class="chip">${esc(lb(QUALS,q))}</span>`).join('')||empty(T('None recorded','لا شيء'))}<h3 style="margin-top:20px">${T('Training sessions','الدورات التدريبية')}</h3>${S.sessions.filter(s=>s.enrolled.includes(o.id)).map(s=>`<div class="fi feed" style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(lb(COURSES,s.course))}</b><span class="mut">${fD(s.date)} · ${s.time}</span>${bd(s.status==='completed'?T('Completed','مكتملة'):T('Scheduled','مجدولة'),s.status==='completed'?'green':'amber')}</div>`).join('')||empty(T('Not enrolled in any session','غير مسجل في دورات'))}`;
+  if(t==='rep')b=`<div class="ct">${T('Commendations','التكريمات')}${can('edit')?addBtn('addcom',T('Add','إضافة')):''}</div>${o.commends.map(c=>`<div class="fi feed" style="display:flex;gap:10px;padding:6px 0">${bd(T('Commendation','تكريم'),'gold')}<span>${esc(tx(c.title))}<small class="mut"> · ${fD(c.date)}</small></span></div>`).join('')||empty(T('None','لا يوجد'))}<div class="ct" style="margin-top:18px">${T('Administrative warnings','الإنذارات الإدارية')}${can('edit')?addBtn('addwarn',T('Add','إضافة')):''}</div>${o.warns.map(c=>`<div class="fi feed" style="display:flex;gap:10px;padding:6px 0">${bd(c.level==='written'?T('Written','كتابي'):T('Verbal','شفهي'),'red')}<span>${esc(tx(c.title))}<small class="mut"> · ${fD(c.date)}</small></span></div>`).join('')||empty(T('None','لا يوجد'))}<h3 style="margin-top:18px">${T('Reports filed','التقارير المقدمة')}</h3>${reps.length?`<div class="scroll"><table class="tbl"><tbody>${reps.map(r=>`<tr class="click" data-act="openrep" data-id="${r.id}"><td>${r.id}</td><td>${fD(isoDay(r.ts))}</td><td>${r.kind==='shift'?T('Shift report','تقرير شفت'):esc(lb(RTYPES,r.type))}</td><td>${stB(RST,r.status)}</td></tr>`).join('')}</tbody></table></div>`:empty(T('No reports','لا تقارير'))}`;
+  if(t==='notes')b=`<div class="ct">${T('Administrative notes','ملاحظات إدارية')}${can('edit')?addBtn('addnote',T('Add note','إضافة ملاحظة')):''}</div>${o.notes.map(n=>`<div class="card" style="margin-bottom:8px;background:var(--panel2)"><div>${esc(tx(n.txt))}</div><small class="mut">${esc(nm(n.by))} · ${fD(n.date)}</small></div>`).join('')||empty(T('No notes','لا ملاحظات'))}`;
+  if(t==='eval'){const cat=[T('Tactics','التكتيك'),T('Communication','التواصل'),T('Reports','التقارير'),T('Professionalism','الاحترافية')];b=`<div class="ct">${T('Supervisor evaluations','تقييمات المشرف')}${can('edit')?addBtn('addeval',T('New evaluation','تقييم جديد')):''}</div>${o.evals.map(e=>`<div class="card" style="margin-bottom:10px;background:var(--panel2)"><div class="kv">${e.sc.map((s,i)=>`<div><small>${cat[i]}</small><div class="scorebar" title="${s}/5">${[1,2,3,4,5].map(n=>`<i class="${n<=s?'f':''}"></i>`).join('')}</div></div>`).join('')}</div><p>${esc(tx(e.txt))}</p><small class="mut">${esc(nm(e.by))} · ${fD(e.date)}</small></div>`).join('')||empty(T('No evaluations on record','لا تقييمات'))}`}
+  return `<div class="card"><div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${avatar(o,1)}<div style="flex:1;min-width:220px"><h1 class="pt">${esc(o.name[LANG])}</h1><div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${rankB(o.rank)}${stB(STAT,o.status)}<span class="mut">${o.callsign} · ${esc(lb(DIVS,o.div))}</span></div></div>
+   <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="go" data-to="officers">${ic(LANG==='ar'?'right':'left',16)}${T('Directory','الجدول')}</button>${can('edit')?`<select class="inl" data-chg="ostat" data-o="${o.id}" aria-label="status">${opt(STAT).map(([k,l])=>`<option value="${k}" ${o.status===k?'selected':''}>${esc(l)}</option>`).join('')}</select><button class="btn" data-act="editoff" data-id="${o.id}">${ic('edit',16)}${T('Edit','تعديل')}</button><button class="btn gold" data-act="rankchg" data-id="${o.id}">${ic('up',16)}${T('Rank change','تغيير رتبة')}</button>`:''}</div></div></div>
+   <div class="card" style="margin-top:14px"><div class="tabs" role="tablist">${tabs.map(x=>`<button class="tab ${t===x[0]?'on':''}" role="tab" data-act="otab" data-t="${x[0]}">${esc(x[1])}</button>`).join('')}</div>${b}</div>`;
+}
+ACT.otab=d=>{UI.otab=d.t;render()};
+ACT.editquals=d=>{if(!need('edit'))return;const o=gO(d.id);FM(T('Edit qualifications','تعديل المؤهلات'),[{k:'q',type:'multi',full:1,label:o.name[LANG],val:o.quals,opts:opt(QUALS)}],v=>{o.quals=v.q;commit()})};
+ACT.addcom=d=>{if(!need('edit'))return;const o=gO(d.id);FM(T('Record commendation','تسجيل تكريم'),[{k:'t',label:T('Commendation','التكريم'),req:1,full:1},{k:'date',type:'date',label:T('Date','التاريخ'),val:isoDay(Date.now())}],v=>{o.commends.push({date:v.date,title:v.t,by:'LSPD-1001'});commit();toast(T('Commendation recorded','تم تسجيل التكريم'),'ok')})};
+ACT.addwarn=d=>{if(!need('edit'))return;const o=gO(d.id);FM(T('Record administrative warning','تسجيل إنذار إداري'),[{k:'t',label:T('Reason','السبب'),req:1,full:1},{k:'level',type:'select',label:T('Level','المستوى'),opts:[['verbal',T('Verbal','شفهي')],['written',T('Written','كتابي')]]},{k:'date',type:'date',label:T('Date','التاريخ'),val:isoDay(Date.now())}],v=>{o.warns.push({date:v.date,title:v.t,level:v.level,by:'LSPD-1001'});commit();toast(T('Warning recorded','تم تسجيل الإنذار'),'ok')})};
+ACT.addnote=d=>{if(!need('edit'))return;const o=gO(d.id);FM(T('Add administrative note','إضافة ملاحظة إدارية'),[{k:'t',type:'textarea',full:1,label:T('Note','الملاحظة'),req:1}],v=>{o.notes.unshift({date:dAgo(0),by:'LSPD-1001',txt:v.t});commit()})};
+ACT.addeval=d=>{if(!need('edit'))return;const o=gO(d.id),sc=[1,2,3,4,5].map(n=>[n,n+' / 5']);FM(T('New evaluation','تقييم جديد'),[{k:'a',type:'select',label:T('Tactics','التكتيك'),val:4,opts:sc},{k:'b',type:'select',label:T('Communication','التواصل'),val:4,opts:sc},{k:'c',type:'select',label:T('Reports','التقارير'),val:4,opts:sc},{k:'d',type:'select',label:T('Professionalism','الاحترافية'),val:4,opts:sc},{k:'t',type:'textarea',full:1,label:T('Supervisor comment','تعليق المشرف'),req:1}],v=>{o.evals.unshift({date:dAgo(0),by:o.sup||'LSPD-1001',sc:[+v.a,+v.b,+v.c,+v.d],txt:v.t});commit()})};
+/* ================= Dispatch ================= */
+const locName=i=>LOCS[i][LANG==='ar'?1:0];
+function vDispatch(){
+  const f=UI.dsp,now=Date.now();
+  const openC=S.calls.filter(openCall),pend=S.calls.filter(c=>c.st==='pending'),fu=S.calls.filter(c=>c.st==='followup'),cl=S.calls.filter(c=>c.st==='closed'&&now-c.closedTs<3*3600000);
+  const disp=S.officers.filter(o=>o.status==='dispatch'),busyU=S.units.filter(u=>['busy','unavailable'].includes(u.status));
+  let list=S.calls.filter(c=>f==='all'||(f==='open'&&openCall(c))||c.st===f);
+  list=[...list].sort((a,b)=>(openCall(b)-openCall(a))||(openCall(a)&&openCall(b)?(a.pr-b.pr||b.ts-a.ts):b.ts-a.ts));
+  const tile=(n,l,c)=>`<div class="card kpi ${c||''}" style="cursor:default"><div class="n">${n}</div><div class="l">${esc(l)}</div></div>`;
+  const pill=(k,l)=>`<button class="pill ${f===k?'on':''}" data-act="dspf" data-f="${k}">${esc(l)}</button>`;
+  return ph(T('Dispatch Center','مركز الدسباتش'),T('Calls, units and dispatchers for the live roleplay session.','البلاغات والوحدات والدسباتشر لجلسة الرول بلاي الحالية.')+' '+simTag(),`<button class="btn gold" data-act="newcall">${ic('plus',16)}${T('New call','بلاغ جديد')}</button>`)+
+  `<div class="grid kpis">${tile(disp.length,T('Available dispatchers','دسباتشر متاحون'),'green')}${tile(S.units.filter(u=>u.status!=='unavailable').length,T('Active patrol units','وحدات دورية نشطة'),'green')}${tile(busyU.length,T('Busy / unavailable units','وحدات مشغولة/غير متاحة'),'amber')}${tile(openC.length,T('Current incidents','البلاغات الجارية'),'red')}${tile(pend.length,T('Pending calls','بلاغات معلقة'),'red')}${tile(cl.length,T('Closed (last 3 h)','أُغلقت (آخر 3 س)'))}${tile(fu.length,T('Awaiting follow-up','بانتظار المتابعة'),'amber')}</div>
+  <div class="grid split" style="margin-top:14px"><div class="card"><div class="filters"><div class="pillset">${pill('all',T('All','الكل'))}${pill('open',T('Active','نشطة'))}${pill('pending',T('Pending','معلقة'))}${pill('followup',T('Follow-up','متابعة'))}${pill('closed',T('Closed','مغلقة'))}</div></div>
+   <div class="scroll"><table class="tbl"><thead><tr><th>${T('Call #','رقم البلاغ')}</th><th>${T('Time','الوقت')}</th><th>${T('Type / code','النوع / الكود')}</th><th>${T('Priority','الأولوية')}</th><th>${T('Location','الموقع')}</th><th>${T('Caller','المتصل')}</th><th>${T('Units','الوحدات')}</th><th>${T('Status','الحالة')}</th><th>${T('Dispatcher','الدسباتشر')}</th></tr></thead><tbody>${list.map(c=>`<tr class="click ${c.pr===1&&openCall(c)?'p1row':''}" data-act="opencall2" data-id="${c.id}"><td><b>${c.id}</b></td><td>${fT(c.ts)}<small class="mut" style="display:block">${ago(c.ts)}</small></td><td>${esc(lb(CALLTYPES,c.type))}<small class="mut" style="display:block">${CALLTYPES[c.type][2]}</small></td><td>${priB(c.pr)}</td><td>${esc(locName(c.loc))}</td><td>${esc(tx(c.caller))}</td><td>${c.units.length?c.units.map(u=>`<span class="chip">${esc(u)}</span>`).join(''):'<span class="mut">—</span>'}</td><td>${stB(CST,c.st)}</td><td>${esc(nm(c.disp).split(' ')[0])}</td></tr>`).join('')}</tbody></table></div>${list.length?'':empty(T('No calls in this view.','لا بلاغات في هذا العرض.'))}</div>
+   <div style="display:grid;gap:14px"><div class="card"><h3>${T('Dispatchers on duty','الدسباتشر على رأس العمل')}</h3>${disp.map(o=>`<div class="who" style="margin-bottom:10px">${avatar(o)}<div><b>${esc(o.name[LANG])}</b><small>${o.callsign} · ${S.calls.filter(c=>c.disp===o.id&&openCall(c)).length} ${T('active calls','بلاغات نشطة')}</small></div></div>`).join('')||empty(T('No dispatcher on duty','لا دسباتشر'))}</div>
+   <div class="card"><h3>${T('Units','الوحدات')}${can('dispatch')?`<button class="btn sm" data-act="newunit">${ic('plus',14)}${T('Add unit','إضافة وحدة')}</button>`:''}</h3>${S.units.map(u=>`<div style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><div><b data-act="unitm" data-id="${u.id}" style="cursor:pointer">${u.id}</b><small class="mut" style="display:block">${esc(u.crew.map(c=>nm(c).split(' ')[0]).join(LANG==='ar'?'، ':', '))}${u.call?' · '+u.call:''}</small></div>${u.call?stB(UST,u.status):`<select class="inl" style="height:30px" data-chg="ustat" data-u="${u.id}" aria-label="${u.id}">${opt(UST).filter(([k])=>!['enroute','onscene'].includes(k)).map(([k,l])=>`<option value="${k}" ${u.status===k?'selected':''}>${esc(l)}</option>`).join('')}</select>`}</div>`).join('')||empty(T('No units yet. Add one to start dispatching.','لا توجد وحدات. أضف وحدة لتبدأ الإرسال.'))}</div></div></div>`;
+}
+ACT.newunit=()=>unitForm();
+function unitForm(id){
+  if(!need('dispatch'))return;const u=id?gU(id):null;
+  const f=[];if(!u)f.push({k:'id',label:T('Unit callsign','كول ساين الوحدة'),req:1});
+  f.push({k:'kind',type:'select',label:T('Type','النوع'),val:u?u.kind:'patrol',opts:[['patrol',T('Patrol','دورية')],['supv',T('Supervisor','مشرف')],['traffic',T('Traffic','مرور')],['air',T('Air support','جوي')],['k9','K-9']]},{k:'zone',type:'select',label:T('Zone','المنطقة'),val:u?u.zone:'downtown',opts:opt(ZONES)},{k:'crew',type:'multi',full:1,label:T('Crew','الطاقم'),val:u?u.crew:[],opts:offOpts()});
+  FM(u?T('Edit unit','تعديل وحدة')+' — '+u.id:T('Add unit','إضافة وحدة'),f,v=>{
+    if(u){u.kind=v.kind;u.zone=v.zone;u.crew=v.crew}
+    else{const cs=v.id.toUpperCase().replace(/\s+/g,'-');if(gU(cs)){toast(T('This callsign already exists','هذا الكول ساين موجود'),'err');return false}S.units.push({id:cs,kind:v.kind,crew:v.crew,status:'available',zone:v.zone,px:.2+Math.random()*.6,py:.3+Math.random()*.5,call:null})}
+    commit();toast(T('Unit saved','تم حفظ الوحدة'),'ok')});
+}
+ACT.editunit=d=>{closeModal();unitForm(d.id)};
+ACT.delunit=d=>{const u=gU(d.id);if(u.call){toast(T('Unit is on an active call','الوحدة على بلاغ نشط'),'err');return}S.units=S.units.filter(x=>x.id!==d.id);S.calls.forEach(c=>{c.units=c.units.filter(x=>x!==d.id)});closeModal();commit();toast(T('Unit removed','تم حذف الوحدة'))};
+ACT.dspf=d=>{UI.dsp=d.f;render()};ACT.opencall2=d=>openCallM(d.id);ACT.newcall=ACT.newcall;
+function callForm(){
+  if(!need('dispatch'))return;
+  FM(T('New dispatch call','بلاغ جديد'),[{k:'type',type:'select',label:T('Call type','نوع البلاغ'),val:'suspect',opts:Object.keys(CALLTYPES).map(k=>[k,lb(CALLTYPES,k)+' ('+CALLTYPES[k][2]+')'])},{k:'pr',type:'select',label:T('Priority','الأولوية'),val:3,opts:[1,2,3,4].map(p=>[p,'P'+p+' · '+lb(PRI,p)])},{k:'loc',type:'select',label:T('Location','الموقع'),val:0,opts:LOCS.map((l,i)=>[i,l[LANG==='ar'?1:0]])},{k:'caller',label:T('Caller (optional)','المتصل (اختياري)')},{k:'unit',type:'select',label:T('Assign unit now (optional)','إرسال وحدة الآن (اختياري)'),opts:[['','—'],...S.units.filter(u=>u.status==='available').map(u=>[u.id,u.id])]},{k:'note',type:'textarea',full:1,label:T('Initial note','ملاحظة أولية')}],v=>{
+   const c=newCall(v);if(v.unit)assignUnit(c,v.unit);commit();toast(T('Call created: ','تم إنشاء البلاغ: ')+c.id,'ok');setTimeout(()=>openCallM(c.id),0)},{kind:'call',save:T('Create call','إنشاء البلاغ')});
+}
+function openCallM(id){
+  const c=gC(id);if(!c)return;const d=can('dispatch');
+  const avail=S.units.filter(u=>u.status==='available'&&!c.units.includes(u.id));
+  const body=`<div class="kv"><div><small>${T('Type','النوع')}</small><b>${esc(lb(CALLTYPES,c.type))} (${CALLTYPES[c.type][2]})</b></div><div><small>${T('Priority','الأولوية')}</small>${priB(c.pr)}</div><div><small>${T('Status','الحالة')}</small>${stB(CST,c.st)}</div><div><small>${T('Location','الموقع')}</small><b>${esc(locName(c.loc))}</b></div><div><small>${T('Received','الاستلام')}</small><b>${fDT(c.ts)}</b></div><div><small>${T('Caller','المتصل')}</small><b>${esc(tx(c.caller))}</b></div><div><small>${T('Dispatcher','الدسباتشر')}</small><b>${esc(nm(c.disp))}</b></div><div><small>${T('Response time','زمن الاستجابة')}</small><b>${c.rt!=null?Math.floor(c.rt/60)+'m '+String(c.rt%60).padStart(2,'0')+'s':'—'}</b></div></div>
+  ${c.follow?`<div class="card" style="margin-top:14px;background:var(--panel2)"><b>${bd(T('Follow-up','متابعة'),'blue')} ${esc(tx(c.follow.note))}</b><div class="mut" style="font-size:13px">${T('Due','الموعد')}: ${fDT(c.follow.due)}</div></div>`:''}
+  <h3 style="margin:18px 0 8px">${T('Assigned units','الوحدات المكلفة')}</h3><div>${c.units.map(u=>`<span class="chip">${esc(u)} ${d&&c.st!=='closed'?`<a data-act="unrem" data-id="${c.id}" data-u="${u}" style="cursor:pointer;color:var(--red)" aria-label="remove">×</a>`:''}</span>`).join('')||'<span class="mut">'+T('No units assigned','لا وحدات')+'</span>'}</div>
+  ${d&&c.st!=='closed'?`<div style="display:flex;gap:8px;margin-top:10px"><select class="inl" id="asg" aria-label="unit"><option value="">${T('Select available unit…','اختر وحدة متاحة…')}</option>${avail.map(u=>`<option>${u.id}</option>`).join('')}</select><button class="btn sm" data-act="unadd" data-id="${c.id}">${T('Assign','إرسال')}</button></div>`:''}
+  <h3 style="margin:18px 0 8px">${T('Call log','سجل البلاغ')}</h3><div class="tl">${[...c.log,...c.notes.map(n=>({ts:n.ts,t:{en:'Note: '+n.t,ar:'ملاحظة: '+n.t}}))].sort((a,b)=>a.ts-b.ts).map(l=>`<div class="it s"><small>${fT(l.ts)}</small>${esc(tx(l.t))}</div>`).join('')}</div>
+  ${d?`<div style="display:flex;gap:8px"><input class="inl" id="cnote" style="flex:1" placeholder="${T('Add a note…','أضف ملاحظة…')}"><button class="btn sm" data-act="cnote" data-id="${c.id}">${T('Add','إضافة')}</button></div>`:''}`;
+  const foot=(d?[c.st==='pending'||c.st==='dispatched'?`<button class="btn" data-act="cst" data-id="${c.id}" data-s="onscene">${T('Mark on scene','وصول للموقع')}</button>`:'',c.st==='onscene'||c.st==='dispatched'?`<button class="btn" data-act="cfollow" data-id="${c.id}">${T('Needs follow-up','يحتاج متابعة')}</button>`:'',c.st!=='closed'?`<button class="btn green" data-act="cst" data-id="${c.id}" data-s="closed">${T('Close call','إغلاق البلاغ')}</button>`:`<button class="btn" data-act="cst" data-id="${c.id}" data-s="pending">${T('Reopen','إعادة فتح')}</button>`].join(''):'')+`<button class="btn" data-act="callrep" data-id="${c.id}">${ic('file',15)}${T('Create incident report','إنشاء تقرير حادث')}</button><button class="btn pri" data-act="close">${T('Done','تم')}</button>`;
+  openModal(c.id+' — '+lb(CALLTYPES,c.type),body,foot,{wide:1,nofocus:1});
+}
+const reopen=id=>{closeModal();commit();openCallM(id)};
+ACT.unadd=d=>{if(!need('dispatch'))return;const u=$('#asg').value;if(!u)return;assignUnit(gC(d.id),u);reopen(d.id)};
+ACT.unrem=d=>{if(!need('dispatch'))return;const c=gC(d.id);c.units=c.units.filter(x=>x!==d.u);logC(c,'Unit removed: '+d.u,'تمت إزالة وحدة: '+d.u);if(!c.units.length&&['dispatched','onscene'].includes(c.st))c.st='pending';syncUnits(S);reopen(d.id)};
+ACT.cst=d=>{if(!need('dispatch'))return;setSt(gC(d.id),d.s);reopen(d.id)};
+ACT.cnote=d=>{const v=$('#cnote').value.trim();if(!v||!need('dispatch'))return;gC(d.id).notes.push({ts:Date.now(),by:S.settings.role,t:v});reopen(d.id)};
+ACT.cfollow=d=>{if(!need('dispatch'))return;const c=gC(d.id);closeModal();FM(T('Follow-up required','متابعة مطلوبة'),[{k:'n',type:'textarea',full:1,label:T('What needs to be done?','ما المطلوب؟'),req:1},{k:'h',type:'number',label:T('Due in (hours)','الموعد بعد (ساعات)'),val:4,min:1,max:72}],v=>{c.follow={note:{en:v.n,ar:v.n},due:Date.now()+v.h*3600000};setSt(c,'followup');commit();setTimeout(()=>openCallM(c.id),0)})};
+ACT.callrep=d=>{closeModal();reportForm(d.id)};
+ACT.unitm=d=>unitModal(d.id);
+function unitModal(id){
+  const u=gU(id),c=u.call?gC(u.call):null;
+  openModal(u.id,`<div class="kv"><div><small>${T('Status','الحالة')}</small>${stB(UST,u.status)}</div><div><small>${T('Zone','المنطقة')}</small><b>${esc(lb(ZONES,u.zone))}</b></div><div><small>${T('Current call','البلاغ الحالي')}</small><b>${u.call||'—'}</b></div></div><h3 style="margin:16px 0 8px">${T('Crew','الطاقم')}</h3>${u.crew.map(i=>{const o=gO(i);return `<div class="who" style="margin-bottom:8px">${avatar(o)}<div><b>${esc(o.name[LANG])}</b><small>${esc(lb(RK,o.rank))} · ${o.callsign}</small></div></div>`}).join('')}${can('dispatch')?`<div style="margin-top:14px"><label class="mut">${T('Relocate to zone','نقل إلى منطقة')}</label> <select class="inl" id="uz">${opt(ZONES).map(([k,l])=>`<option value="${k}" ${u.zone===k?'selected':''}>${esc(l)}</option>`).join('')}</select> <button class="btn sm" data-act="uzone" data-id="${u.id}">${T('Move','نقل')}</button></div>`:''}`,`${can('dispatch')?`<button class="btn" data-act="editunit" data-id="${u.id}">${T('Edit','تعديل')}</button><button class="btn red" data-act="delunit" data-id="${u.id}">${T('Delete','حذف')}</button>`:''}${c?`<button class="btn" data-act="opencall3" data-id="${c.id}">${T('Open call','فتح البلاغ')}</button>`:''}<button class="btn pri" data-act="close">${T('Done','تم')}</button>`,{nofocus:1});
+}
+ACT.uzone=d=>{const u=gU(d.id);u.zone=$('#uz').value;closeModal();commit();toast(T('Unit relocated','تم نقل الوحدة'),'ok')};
+ACT.opencall3=d=>{closeModal();openCallM(d.id)};
+
+/* ================= Patrol tracking ================= */
+function vPatrol(){
+  const zx=k=>20+ZONES[k][2]*(ZW+ZG),zy=k=>20+ZONES[k][3]*(ZH+ZG);
+  const col={available:'var(--green)',enroute:'var(--amber)',onscene:'var(--red)',busy:'var(--blue)',unavailable:'var(--muted)'};
+  let m=`<svg class="map" viewBox="0 0 800 500" role="img" aria-label="${T('Schematic city map (simulated)','خريطة تخطيطية للمدينة (محاكاة)')}"><path class="road" d="M0 175H800M0 335H800M265 0V500M525 0V500"/>`;
+  Object.keys(ZONES).forEach(k=>{m+=`<rect class="zone" x="${zx(k)}" y="${zy(k)}" width="${ZW}" height="${ZH}" rx="10"/><text class="zn" x="${zx(k)+12}" y="${zy(k)+22}">${esc(lb(ZONES,k))}</text>`});
+  S.calls.filter(openCall).forEach(c=>{const z=zoneOf(c),h=hash(c.id);const x=zx(z)+40+h%170,y=zy(z)+50+(h>>3)%80;m+=`<g class="${c.pr===1?'callp':''}" data-act="opencall2" data-id="${c.id}" style="cursor:pointer"><path d="M${x} ${y-12}l10 18h-20z" fill="${c.pr===1?'var(--red)':c.pr===2?'var(--amber)':'var(--green)'}" stroke="var(--bg2)" stroke-width="1.5"><title>${c.id} — ${esc(lb(CALLTYPES,c.type))}</title></path></g>`});
+  S.units.forEach(u=>{const x=zx(u.zone)+16+u.px*(ZW-32),y=zy(u.zone)+34+(u.py-.25)/.6*(ZH-60);m+=`<g class="u" data-act="unitm" data-id="${u.id}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${col[u.status]}" stroke="var(--bg2)" stroke-width="2"><title>${u.id} — ${esc(lb(UST,u.status))}</title></circle><text class="ul" x="${(x+10).toFixed(1)}" y="${(y+3).toFixed(1)}">${u.id}</text></g>`});
+  m+='</svg>';
+  const zf=UI.pz,list=S.units.filter(u=>!zf||u.zone===zf);
+  return ph(T('Patrol Tracking','تتبع الدوريات'),T('Schematic map with simulated unit positions — not real GPS.','خريطة تخطيطية بمواقع محاكاة للوحدات — وليست GPS حقيقي.')+' '+simTag())+
+  `<div class="grid split"><div class="card">${m}<div class="legend" style="flex-direction:row;flex-wrap:wrap;gap:14px;margin-top:10px">${Object.keys(UST).map(k=>`<span><i style="background:${col[k]}"></i>${esc(lb(UST,k))}</span>`).join('')}<span><i style="background:var(--red);border-radius:0"></i>${T('Active call','بلاغ نشط')}</span></div></div>
+  <div class="card"><div class="filters"><select class="inl" data-chg="pz" aria-label="zone"><option value="">${T('All zones','كل المناطق')}</option>${opt(ZONES).map(([k,l])=>`<option value="${k}" ${zf===k?'selected':''}>${esc(l)}</option>`).join('')}</select></div>${list.map(u=>`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer" data-act="unitm" data-id="${u.id}"><div><b>${u.id}</b><small class="mut" style="display:block">${esc(lb(ZONES,u.zone))} · ${u.crew.length} ${T('officers','عساكر')}</small></div>${stB(UST,u.status)}</div>`).join('')||empty(T('No units in this zone','لا وحدات'))}</div></div>`;
+}
+
+/* ================= Reports ================= */
+function vReports(){
+  const t=UI.rtab,inc=S.reports.filter(r=>r.kind==='incident'),sh=S.reports.filter(r=>r.kind==='shift'),q=S.reports.filter(r=>r.status==='pending');
+  const tabs=[['incident',T('Incident reports','تقارير الحوادث')+' ('+inc.length+')'],['shift',T('Shift reports','تقارير الشفت')+' ('+sh.length+')'],['queue',T('Approval queue','طابور الاعتماد')+' ('+q.length+')']];
+  let b='';
+  if(t==='incident')b=`<div class="scroll"><table class="tbl"><thead><tr><th>${T('Report','التقرير')}</th><th>${T('Date','التاريخ')}</th><th>${T('Officer','العسكري')}</th><th>${T('Type','النوع')}</th><th>${T('Location','الموقع')}</th><th>${T('Supervisor','المشرف')}</th><th>${T('Status','الحالة')}</th></tr></thead><tbody>${inc.sort((a,b)=>b.ts-a.ts).map(r=>`<tr class="click" data-act="openrep" data-id="${r.id}"><td><b>${r.id}</b></td><td>${fD(isoDay(r.ts))}</td><td>${esc(nm(r.officer))}</td><td>${esc(lb(RTYPES,r.type))}</td><td>${esc(locName(r.loc))}</td><td>${esc(nm(r.sup))}</td><td>${stB(RST,r.status)}</td></tr>`).join('')}</tbody></table></div>`;
+  if(t==='shift')b=`<div class="scroll"><table class="tbl"><thead><tr><th>${T('Report','التقرير')}</th><th>${T('Date','التاريخ')}</th><th>${T('Officer','العسكري')}</th><th>${T('Hours','الساعات')}</th><th>${T('Calls','البلاغات')}</th><th>${T('Arrests','القبض')}</th><th>${T('Citations','المخالفات')}</th><th>${T('Status','الحالة')}</th></tr></thead><tbody>${sh.sort((a,b)=>b.ts-a.ts).map(r=>`<tr class="click" data-act="openrep" data-id="${r.id}"><td><b>${r.id}</b></td><td>${fD(isoDay(r.ts))}</td><td>${esc(nm(r.officer))}</td><td>${r.hours}</td><td>${r.calls}</td><td>${r.arrests}</td><td>${r.cites}</td><td>${stB(RST,r.status)}</td></tr>`).join('')}</tbody></table></div>`;
+  if(t==='queue')b=q.length?q.sort((a,b)=>a.ts-b.ts).map(r=>`<div class="card" style="background:var(--panel2);margin-bottom:10px;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;align-items:center"><div><b>${r.id}</b> · ${r.kind==='shift'?T('Shift report','تقرير شفت'):esc(lb(RTYPES,r.type))}<div class="mut" style="font-size:13px">${esc(nm(r.officer))} · ${ago(r.ts)} · ${T('Supervisor','المشرف')}: ${esc(nm(r.sup))}</div><div style="font-size:14px;margin-top:4px">${esc(tx(r.txt))}</div></div><div style="display:flex;gap:8px"><button class="btn sm" data-act="openrep" data-id="${r.id}">${T('Review','مراجعة')}</button></div></div>`).join(''):empty(T('The approval queue is empty.','طابور الاعتماد فارغ.'));
+  return ph(T('Reports & Approvals','التقارير والاعتماد'),T('Incident and shift reports with supervisor approval workflow.','تقارير الحوادث والشفتات مع دورة اعتماد المشرف.'),`<button class="btn" data-act="exportrep">${ic('dl',16)}${T('Export CSV','تصدير CSV')}</button><button class="btn" data-act="newshift">${ic('plus',16)}${T('Shift report','تقرير شفت')}</button><button class="btn gold" data-act="newreport">${ic('plus',16)}${T('Incident report','تقرير حادث')}</button>`)+`<div class="card"><div class="tabs">${tabs.map(x=>`<button class="tab ${t===x[0]?'on':''}" data-act="rtab" data-t="${x[0]}">${esc(x[1])}</button>`).join('')}</div>${b}</div>`;
+}
+ACT.rtab=d=>{UI.rtab=d.t;render()};
+ACT.exportrep=()=>{if(!need('export'))return;saveFile('lspd-reports-'+isoDay(Date.now())+'.csv',csv([['ID','Kind','Date','Officer','Type','Status','Supervisor'],...S.reports.map(r=>[r.id,r.kind,isoDay(r.ts),nm0(r.officer),r.kind==='shift'?'shift':RTYPES[r.type][0],RST[r.status][0],nm0(r.sup)])]))};
+const nm0=id=>{const o=gO(id);return o?o.name.en:''};
+function reportForm(callId){
+  if(!needOff())return;
+  const c=callId?gC(callId):null;
+  FM(T('New incident report','تقرير حادث جديد'),[{k:'off',type:'select',label:T('Reporting officer','العسكري المُبلّغ'),val:'',opts:offOpts()},{k:'type',type:'select',label:T('Type','النوع'),val:c?c.type:'suspect',opts:Object.keys(RTYPES).map(k=>[k,lb(RTYPES,k)])},{k:'loc',type:'select',label:T('Location','الموقع'),val:c?c.loc:0,opts:LOCS.map((l,i)=>[i,l[LANG==='ar'?1:0]])},{k:'status',type:'select',label:T('Submit as','الحفظ كـ'),val:'pending',opts:[['pending',T('Submit for approval','إرسال للاعتماد')],['draft',T('Save as draft','حفظ كمسودة')]]},{k:'txt',type:'textarea',rows:5,full:1,label:T('Narrative','السرد'),req:1}],v=>{
+   const o=gO(v.off);const r={id:'IR-26-'+(++S.seq.ir),kind:'incident',ts:Date.now(),officer:o.id,call:callId||null,type:v.type,loc:+v.loc,txt:{en:v.txt,ar:v.txt},status:v.status,sup:o.sup||'LSPD-1004'};S.reports.unshift(r);commit();toast(T('Report saved: ','تم حفظ التقرير: ')+r.id,'ok')},{save:T('Save report','حفظ التقرير')});
+}
+function shiftForm(){
+  if(!needOff())return;
+  FM(T('New shift report','تقرير شفت جديد'),[{k:'off',type:'select',label:T('Officer','العسكري'),opts:offOpts()},{k:'hours',type:'number',label:T('Hours on duty','ساعات الدوام'),val:8,min:1,max:16},{k:'calls',type:'number',label:T('Calls handled','البلاغات'),val:6,min:0},{k:'arrests',type:'number',label:T('Arrests','القبض'),val:0,min:0},{k:'cites',type:'number',label:T('Citations','المخالفات'),val:0,min:0},{k:'txt',type:'textarea',full:1,label:T('Shift summary','ملخص الشفت'),req:1}],v=>{
+   const o=gO(v.off),r={id:'SR-26-'+(++S.seq.sr),kind:'shift',ts:Date.now(),officer:o.id,hours:v.hours,calls:v.calls,arrests:v.arrests,cites:v.cites,txt:{en:v.txt,ar:v.txt},status:'pending',sup:o.sup||'LSPD-1004'};S.reports.unshift(r);o.last=dAgo(0);commit();toast(T('Shift report submitted','تم إرسال تقرير الشفت'),'ok')});
+}
+function openReport(id){
+  const r=S.reports.find(x=>x.id===id);if(!r)return;const ap=can('approve')&&r.status==='pending';
+  const body=`<div class="kv"><div><small>${T('Officer','العسكري')}</small><b>${esc(nm(r.officer))}</b></div><div><small>${T('Date','التاريخ')}</small><b>${fDT(r.ts)}</b></div><div><small>${T('Status','الحالة')}</small>${stB(RST,r.status)}</div><div><small>${T('Supervisor','المشرف')}</small><b>${esc(nm(r.sup))}</b></div>${r.kind==='incident'?`<div><small>${T('Type','النوع')}</small><b>${esc(lb(RTYPES,r.type))}</b></div><div><small>${T('Location','الموقع')}</small><b>${esc(locName(r.loc))}</b></div>${r.call?`<div><small>${T('Linked call','البلاغ المرتبط')}</small><b>${r.call}</b></div>`:''}`:`<div><small>${T('Hours','الساعات')}</small><b>${r.hours}</b></div><div><small>${T('Calls / arrests / citations','بلاغات / قبض / مخالفات')}</small><b>${r.calls} / ${r.arrests} / ${r.cites}</b></div>`}</div><h3 style="margin:16px 0 6px">${r.kind==='shift'?T('Summary','الملخص'):T('Narrative','السرد')}</h3><p>${esc(tx(r.txt))}</p>${r.dec?`<div class="card" style="background:var(--panel2)"><b>${T('Supervisor decision','قرار المشرف')}</b> — ${esc(nm(r.dec.by))} · ${fDT(r.dec.ts)}<div>${esc(tx(r.dec.c))}</div></div>`:''}${ap?`<div class="fld" style="margin-top:14px"><label for="dcm">${T('Decision comment','تعليق القرار')}</label><textarea id="dcm" rows="2"></textarea></div>`:''}`;
+  openModal(r.id,body,(ap?`<button class="btn red" data-act="decide" data-id="${r.id}" data-a="returned">${T('Return for revision','إعادة للتعديل')}</button><button class="btn green" data-act="decide" data-id="${r.id}" data-a="approved">${T('Approve','اعتماد')}</button>`:'')+`<button class="btn" data-act="close">${T('Close','إغلاق')}</button>`,{nofocus:1});
+}
+ACT.decide=d=>{if(!need('approve'))return;const r=S.reports.find(x=>x.id===d.id),c=($('#dcm').value||'').trim()||(d.a==='approved'?T('Approved.','معتمد.'):T('Returned for revision.','أعيد للتعديل.'));
+  r.status=d.a;r.dec={by:'LSPD-1004',ts:Date.now(),c:{en:c,ar:c}};S.decisions.unshift({ts:Date.now(),by:'LSPD-1004',ref:r.id,act:d.a,c:{en:c,ar:c}});closeModal();commit();toast(d.a==='approved'?T('Report approved','تم اعتماد التقرير'):T('Report returned','تمت إعادة التقرير'),'ok')};
+
+/* ================= Training ================= */
+function vTraining(){
+  const t=UI.trn,sc=S.sessions.filter(s=>s.status==='scheduled').sort((a,b)=>a.date<b.date?-1:1),dn=S.sessions.filter(s=>s.status==='completed');
+  const act=S.officers.filter(o=>o.status!=='archived');
+  const card=s=>{const full=s.enrolled.length>=s.cap;return `<div class="card" style="background:var(--panel2)"><div class="ct">${esc(lb(COURSES,s.course))}${bd(s.status==='completed'?T('Completed','مكتملة'):T('Scheduled','مجدولة'),s.status==='completed'?'green':'amber')}</div><div class="mut" style="font-size:13px">${fD(s.date)} · ${s.time} · ${esc(tx(s.loc))}<br>${T('Instructor','المدرب')}: ${esc(nm(s.inst))}</div><div style="margin:10px 0 4px;font-size:13px">${s.enrolled.length} / ${s.cap} ${T('enrolled','مسجلون')}</div><div class="pb"><i style="width:${Math.min(100,100*s.enrolled.length/s.cap)}%;background:${full?'var(--amber)':'var(--green)'}"></i></div><div style="margin-top:8px">${s.enrolled.slice(0,6).map(i=>`<span class="chip">${esc(nm(i).split(' ')[0])}</span>`).join('')}${s.enrolled.length>6?`<span class="chip">+${s.enrolled.length-6}</span>`:''}</div>${s.status==='scheduled'&&can('train')?`<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-act="enroll" data-id="${s.id}">${T('Manage roster','إدارة المسجلين')}</button><button class="btn sm green" data-act="complete" data-id="${s.id}">${T('Mark completed','تحديد كمكتملة')}</button><button class="btn sm red" data-act="cancelS" data-id="${s.id}">${T('Cancel','إلغاء')}</button></div>`:''}</div>`};
+  const qrows=Object.keys(QUALS).map(k=>({l:lb(QUALS,k),v:act.filter(o=>o.quals.includes(k)).length}));
+  return ph(T('Training & Qualifications','التدريب والمؤهلات'),T('Schedule academy sessions, enroll officers and award qualifications.','جدولة دورات الأكاديمية وتسجيل العساكر ومنح المؤهلات.'),can('train')?`<button class="btn gold" data-act="newsess">${ic('plus',16)}${T('Schedule session','جدولة دورة')}</button>`:'')+
+  `<div class="card"><div class="tabs"><button class="tab ${t==='sessions'?'on':''}" data-act="trntab" data-t="sessions">${T('Sessions','الدورات')} (${sc.length})</button><button class="tab ${t==='done'?'on':''}" data-act="trntab" data-t="done">${T('Completed','المكتملة')} (${dn.length})</button><button class="tab ${t==='quals'?'on':''}" data-act="trntab" data-t="quals">${T('Qualification overview','نظرة على المؤهلات')}</button></div>${t==='sessions'?`<div class="grid c3">${sc.map(card).join('')||empty(T('No sessions scheduled','لا دورات مجدولة'))}</div>`:t==='done'?`<div class="grid c3">${dn.map(card).join('')||empty(T('Nothing completed yet','لا شيء'))}</div>`:`<div style="max-width:720px">${hbars(qrows,'var(--steel)')}<div class="sub">${T('Number of active officers holding each qualification.','عدد العساكر النشطين الحاصلين على كل مؤهل.')}</div></div>`}</div>`;
+}
+ACT.trntab=d=>{UI.trn=d.t;render()};
+function sessForm(){
+  if(!need('train'))return;
+  FM(T('Schedule training session','جدولة دورة تدريبية'),[{k:'course',type:'select',label:T('Course','الدورة'),opts:opt(COURSES)},{k:'date',type:'date',label:T('Date','التاريخ'),val:isoDay(Date.now()+2*DAY)},{k:'time',type:'time',label:T('Time','الوقت'),val:'20:00'},{k:'cap',type:'number',label:T('Capacity','السعة'),val:12,min:1,max:60},{k:'inst',type:'select',label:T('Instructor','المدرب'),opts:offOpts(o=>o.quals.includes('fto')||o.div==='training'||canSup(o.rank))},{k:'loc',label:T('Location','المكان'),val:'LSPD Academy'}],v=>{S.sessions.push({id:'TS-'+(++S.seq.ts),course:v.course,date:v.date,time:v.time,inst:v.inst,loc:{en:v.loc,ar:v.loc},cap:v.cap,enrolled:[],status:'scheduled'});UI.view='training';UI.trn='sessions';commit();toast(T('Session scheduled','تمت جدولة الدورة'),'ok')});
+}
+ACT.enroll=d=>{if(!need('train'))return;const s=S.sessions.find(x=>x.id===d.id);FM(T('Manage roster','إدارة المسجلين')+' — '+lb(COURSES,s.course),[{k:'e',type:'multi',full:1,label:T('Enrolled officers (capacity ','المسجلون (السعة ')+s.cap+')',val:s.enrolled,opts:offOpts()}],v=>{if(v.e.length>s.cap){toast(T('Over capacity','تجاوز السعة'),'err');return false}s.enrolled=v.e;commit()})};
+ACT.complete=d=>{if(!need('train'))return;const s=S.sessions.find(x=>x.id===d.id);s.status='completed';s.enrolled.forEach(i=>{const o=gO(i);if(o&&!o.quals.includes(s.course))o.quals.push(s.course)});commit();toast(T('Completed — qualifications awarded to ','اكتملت — مُنحت المؤهلات إلى ')+s.enrolled.length,'ok')};
+ACT.cancelS=d=>{if(!need('train'))return;S.sessions=S.sessions.filter(x=>x.id!==d.id);commit();toast(T('Session cancelled','تم إلغاء الدورة'))};
+
+/* ================= Internal Affairs ================= */
+function vIA(){
+  const f=UI.iaf,all=S.cases,l=all.filter(c=>f==='all'||(f==='active'?['open','investigating'].includes(c.st):['sustained','notsustained','unfounded','closed'].includes(c.st)));
+  const pill=(k,t)=>`<button class="pill ${f===k?'on':''}" data-act="iaf" data-f="${k}">${esc(t)}</button>`;
+  return ph(T('Internal Affairs','الشؤون الداخلية'),T('Restricted — visible to Command Staff and Internal Affairs only. Roleplay cases.','مقيّد — للقيادة والشؤون الداخلية فقط. قضايا رول بلاي.'),`<button class="btn gold" data-act="newcase">${ic('plus',16)}${T('Open case','فتح قضية')}</button>`)+
+  `<div class="grid kpis" style="margin-bottom:14px"><div class="card kpi amber" style="cursor:default"><div class="n">${all.filter(c=>['open','investigating'].includes(c.st)).length}</div><div class="l">${T('Active cases','قضايا نشطة')}</div></div><div class="card kpi red" style="cursor:default"><div class="n">${all.filter(c=>c.sev==='high'&&['open','investigating'].includes(c.st)).length}</div><div class="l">${T('High severity','خطورة عالية')}</div></div><div class="card kpi" style="cursor:default"><div class="n">${all.filter(c=>c.st==='sustained').length}</div><div class="l">${T('Sustained','مثبتة')}</div></div><div class="card kpi" style="cursor:default"><div class="n">${S.officers.filter(o=>o.status==='suspended').length}</div><div class="l">${T('Officers suspended','موقوفون')}</div></div></div>
+  <div class="card"><div class="filters"><div class="pillset">${pill('all',T('All','الكل'))}${pill('active',T('Active','نشطة'))}${pill('resolved',T('Resolved','منتهية'))}</div></div><div class="scroll"><table class="tbl"><thead><tr><th>${T('Case','القضية')}</th><th>${T('Subject officer','العسكري المعني')}</th><th>${T('Allegation','الادعاء')}</th><th>${T('Source','المصدر')}</th><th>${T('Severity','الخطورة')}</th><th>${T('Investigator','المحقق')}</th><th>${T('Opened','فُتحت')}</th><th>${T('Status','الحالة')}</th></tr></thead><tbody>${l.map(c=>`<tr class="click" data-act="opencase" data-id="${c.id}"><td><b>${c.id}</b></td><td>${esc(nm(c.subj))}</td><td>${esc(lb(ALLEG,c.alleg))}</td><td>${esc(tx(c.from))}</td><td>${bd({high:T('High','عالية'),med:T('Medium','متوسطة'),low:T('Low','منخفضة')}[c.sev],{high:'red',med:'amber',low:'green'}[c.sev])}</td><td>${esc(nm(c.inv))}</td><td>${fD(c.date)}</td><td>${stB(IAST,c.st)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+ACT.iaf=d=>{UI.iaf=d.f;render()};ACT.opencase=d=>openCase(d.id);
+function caseForm(){
+  if(!need('ia')||!needOff())return;
+  FM(T('Open IA case','فتح قضية شؤون داخلية'),[{k:'subj',type:'select',label:T('Subject officer','العسكري المعني'),opts:offOpts()},{k:'alleg',type:'select',label:T('Allegation','الادعاء'),opts:opt(ALLEG)},{k:'sev',type:'select',label:T('Severity','الخطورة'),val:'med',opts:[['low',T('Low','منخفضة')],['med',T('Medium','متوسطة')],['high',T('High','عالية')]]},{k:'from',label:T('Source of complaint','مصدر الشكوى'),val:T('Supervisor referral','إحالة من مشرف')},{k:'inv',type:'select',label:T('Investigator','المحقق'),val:'LSPD-1031',opts:offOpts(o=>o.div==='ia'||isCmd(o.rank))},{k:'n',type:'textarea',full:1,label:T('Initial notes','ملاحظات أولية')}],v=>{
+   S.cases.unshift({id:'IA-26-'+String(++S.seq.ia).padStart(3,'0'),alleg:v.alleg,subj:v.subj,from:{en:v.from,ar:v.from},sev:v.sev,st:'open',inv:v.inv,date:dAgo(0),notes:v.n?[{ts:Date.now(),by:v.inv,t:{en:v.n,ar:v.n}}]:[]});UI.view='ia';commit();toast(T('Case opened','تم فتح القضية'),'ok')});
+}
+function openCase(id){
+  const c=S.cases.find(x=>x.id===id);if(!c||!need('ia'))return;
+  openModal(c.id+' — '+lb(ALLEG,c.alleg),`<div class="kv"><div><small>${T('Subject officer','العسكري المعني')}</small><b>${esc(nm(c.subj))}</b></div><div><small>${T('Investigator','المحقق')}</small><b>${esc(nm(c.inv))}</b></div><div><small>${T('Opened','فُتحت')}</small><b>${fD(c.date)}</b></div><div><small>${T('Status','الحالة')}</small>${stB(IAST,c.st)}</div></div><h3 style="margin:16px 0 8px">${T('Case notes','ملاحظات القضية')}</h3><div class="tl">${c.notes.map(n=>`<div class="it s"><small>${fDT(n.ts)} · ${esc(nm(n.by))}</small>${esc(tx(n.t))}</div>`).join('')||empty(T('No notes','لا ملاحظات'))}</div><div style="display:flex;gap:8px"><input class="inl" id="ianote" style="flex:1" placeholder="${T('Add a case note…','أضف ملاحظة…')}"><button class="btn sm" data-act="ianote" data-id="${c.id}">${T('Add','إضافة')}</button></div><div style="margin-top:14px"><label class="mut">${T('Update status','تحديث الحالة')}</label> <select class="inl" id="iast">${opt(IAST).map(([k,l])=>`<option value="${k}" ${c.st===k?'selected':''}>${esc(l)}</option>`).join('')}</select> <button class="btn sm" data-act="iaset" data-id="${c.id}">${T('Apply','تطبيق')}</button></div>`,`<button class="btn pri" data-act="close">${T('Done','تم')}</button>`,{nofocus:1});
+}
+ACT.ianote=d=>{const v=$('#ianote').value.trim();if(!v)return;S.cases.find(x=>x.id===d.id).notes.push({ts:Date.now(),by:'LSPD-1031',t:{en:v,ar:v}});closeModal();commit();openCase(d.id)};
+ACT.iaset=d=>{const c=S.cases.find(x=>x.id===d.id);c.st=$('#iast').value;c.notes.push({ts:Date.now(),by:c.inv,t:{en:'Status changed to '+IAST[c.st][0],ar:'تم تغيير الحالة إلى '+IAST[c.st][1]}});closeModal();commit();openCase(d.id)};
+
+/* ================= Analytics ================= */
+function vAnalytics(){
+  const act=S.officers.filter(o=>o.status!=='archived'),calls=S.calls;
+  const days=[...Array(14)].map((_,i)=>isoDay(Date.now()-(13-i)*DAY)),dl=days.map(d=>String(+d.slice(8)));
+  const perDay=days.map(d=>calls.filter(c=>isoDay(c.ts)===d).length);
+  const rts=calls.filter(c=>c.rt!=null).map(c=>c.rt),avg=rts.length?Math.round(rts.reduce((x,y)=>x+y,0)/rts.length):null;
+  const respDay=days.map(d=>{const r=calls.filter(c=>c.rt!=null&&isoDay(c.ts)===d).map(c=>c.rt);return r.length?Math.round(r.reduce((x,y)=>x+y,0)/r.length):0});
+  const hrs=Array.from({length:24},(_,h)=>({l:h%3===0?String(h):'',v:calls.filter(c=>new Date(c.ts).getHours()===h).length}));
+  const dec=S.reports.filter(r=>r.dec),appr=dec.length?Math.round(dec.reduce((x,r)=>x+(r.dec.ts-r.ts),0)/dec.length/3600000):null;
+  const closedPct=calls.length?Math.round(100*calls.filter(c=>c.st==='closed').length/calls.length)+'%':'—';
+  const byType=Object.keys(CALLTYPES).map(k=>({l:lb(CALLTYPES,k),v:calls.filter(c=>c.type===k).length})).filter(x=>x.v).sort((x,y)=>y.v-x.v).slice(0,8);
+  const divs=Object.keys(DIVS).map(k=>({l:lb(DIVS,k),v:act.filter(o=>o.div===k).length}));
+  const ranks=RANKS.map((r,i)=>({l:r[2],v:act.filter(o=>o.rank===i).length,c:isCmd(i)?'var(--gold)':'var(--steel)'}));
+  const pr=[1,2,3,4].map(p=>({l:'P'+p+' '+lb(PRI,p),v:calls.filter(c=>c.pr===p).length,c:['var(--red)','var(--amber)','var(--green)','var(--steel)'][p-1]}));
+  const ofh=act.filter(isOn).reduce((x,o)=>x+(o.duty[0]&&o.duty[0].open?Math.max(0,Math.round((Date.now()-(o.duty[0].t0||Date.now()))/3600000)):0),0);
+  const k=(n,l,c)=>`<div class="card kpi ${c||''}" style="cursor:default"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+  return ph(T('Command Analytics','تحليلات القيادة'),T('Calculated from the data you enter.','محسوبة من البيانات التي تدخلها.'),`<button class="btn" data-act="exportan">${ic('dl',16)}${T('Export KPIs','تصدير المؤشرات')}</button>`)+
+  `<div class="grid kpis">${k(avg==null?'—':Math.floor(avg/60)+':'+String(avg%60).padStart(2,'0'),T('Avg response time (min)','متوسط زمن الاستجابة (د)'),'gold')}${k(perDay.reduce((x,y)=>x+y,0),T('Calls — last 14 days','بلاغات — آخر 14 يوم'))}${k(closedPct,T('Closure rate','نسبة الإغلاق'),'green')}${k(appr==null?'—':appr+'h',T('Avg report approval time','متوسط زمن اعتماد التقرير'),'amber')}${k(ofh,T('Officer-hours on duty now','ساعات العمل الجارية'))}</div>
+  <div class="grid c2" style="margin-top:14px"><div class="card"><h3>${T('Calls per day','البلاغات يوميًا')}</h3>${lineChart(perDay,dl,{every:2})}</div><div class="card"><h3>${T('Response time trend (seconds)','اتجاه زمن الاستجابة (ثانية)')}</h3>${lineChart(respDay,dl,{color:'var(--steel2)',every:2})}</div>
+  <div class="card"><h3>${T('Calls by hour of day','البلاغات حسب الساعة')}</h3>${barChart(hrs,{color:'var(--gold)'})}</div><div class="card"><h3>${T('Priority mix','توزيع الأولويات')}</h3>${donut(pr)}</div>
+  <div class="card"><h3>${T('Top call types','أكثر أنواع البلاغات')}</h3>${byType.length?hbars(byType):empty(T('No calls yet','لا بلاغات بعد'))}</div><div class="card"><h3>${T('Division manning','قوة الأقسام')}</h3>${hbars(divs,'var(--gold)')}</div>
+  <div class="card"><h3>${T('Rank distribution','توزيع الرتب')}</h3>${barChart(ranks)}</div></div>`;
+}
+ACT.exportan=()=>{if(!need('export'))return;saveFile('lspd-analytics-'+isoDay(Date.now())+'.csv',csv([['Day','Calls'],...[...Array(14)].map((_,i)=>{const d=isoDay(Date.now()-(13-i)*DAY);return[d,S.calls.filter(c=>isoDay(c.ts)===d).length]})]))};
+
+/* ================= Hub: announcements & calendar ================= */
+function vHub(){
+  const n=new Date();if(!UI.cal)UI.cal={y:n.getFullYear(),m:n.getMonth()};
+  const {y,m}=UI.cal,first=new Date(y,m,1),dim=new Date(y,m+1,0).getDate(),off=first.getDay(),today=isoDay(Date.now());
+  const wd=LANG==='ar'?['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let cells=wd.map(w=>`<div class="h">${w}</div>`).join('');
+  for(let i=0;i<off;i++)cells+='<div class="d o"></div>';
+  for(let d=1;d<=dim;d++){const ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');cells+=`<div class="d ${ds===today?'today':''}"><b>${d}</b>${S.events.filter(e=>e.date===ds).map(e=>`<span class="ev ${e.type}" data-act="evinfo" data-id="${e.id}" title="${esc(tx(e.title))}">${e.time} ${esc(tx(e.title))}</span>`).join('')}</div>`}
+  const mname=new Date(y,m,1).toLocaleDateString(loc(),{month:'long',year:'numeric'});
+  const anns=[...S.ann].sort((a,b)=>b.pin-a.pin||b.ts-a.ts);
+  return ph(T('Announcements & Events','التعاميم والفعاليات'),T('Department bulletins and the command calendar.','نشرات القسم وتقويم القيادة.'),can('announce')?`<button class="btn" data-act="newevt">${ic('cal',16)}${T('Add event','إضافة فعالية')}</button><button class="btn gold" data-act="newann">${ic('mega',16)}${T('Post announcement','نشر تعميم')}</button>`:'')+
+  `<div class="grid split" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)"><div class="card"><h3>${T('Announcements','التعاميم')}</h3>${anns.map(a=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>${esc(tx(a.title))}</b>${a.pin?bd(T('Pinned','مثبّت'),'gold'):''}${bd(a.cat,'steel')}</div><div class="mut" style="margin:4px 0">${esc(tx(a.body))}</div><small class="mut">${esc(nm(a.by))} · ${ago(a.ts)}</small>${can('announce')?` <button class="btn sm ico" data-act="delann" data-id="${a.id}" aria-label="delete">${ic('x',13)}</button>`:''}</div>`).join('')}</div>
+  <div class="card"><div class="ct"><button class="btn sm ico" data-act="calnav" data-d="-1" aria-label="prev">${ic(LANG==='ar'?'right':'left',15)}</button><span>${esc(mname)}</span><button class="btn sm ico" data-act="calnav" data-d="1" aria-label="next">${ic(LANG==='ar'?'left':'right',15)}</button></div><div class="cal">${cells}</div></div></div>`;
+}
+ACT.calnav=d=>{let {y,m}=UI.cal;m+=+d.d;if(m<0){m=11;y--}if(m>11){m=0;y++}UI.cal={y,m};render()};
+ACT.evinfo=d=>{const e=S.events.find(x=>x.id===d.id);openModal(tx(e.title),`<div class="kv"><div><small>${T('Date','التاريخ')}</small><b>${fD(e.date)}</b></div><div><small>${T('Time','الوقت')}</small><b>${e.time}</b></div><div><small>${T('Type','النوع')}</small><b>${esc(lb(EVT,e.type))}</b></div></div>`,(can('announce')?`<button class="btn red" data-act="delevt" data-id="${e.id}">${T('Delete','حذف')}</button>`:'')+`<button class="btn pri" data-act="close">${T('Close','إغلاق')}</button>`,{nofocus:1})};
+ACT.delevt=d=>{S.events=S.events.filter(x=>x.id!==d.id);closeModal();commit()};
+ACT.delann=d=>{S.ann=S.ann.filter(x=>x.id!==d.id);commit()};
+function annForm(){
+  if(!need('announce'))return;
+  FM(T('Post announcement','نشر تعميم'),[{k:'t',label:T('Title','العنوان'),req:1,full:1},{k:'b',type:'textarea',rows:4,full:1,label:T('Message','النص'),req:1},{k:'cat',type:'select',label:T('Category','التصنيف'),opts:[['general',T('General','عام')],['policy',T('Policy','سياسة')],['training',T('Training','تدريب')],['briefing',T('Briefing','إحاطة')]]},{k:'pin',type:'select',label:T('Pin to top','تثبيت'),opts:[['0',T('No','لا')],['1',T('Yes','نعم')]]}],v=>{S.ann.unshift({id:'AN-'+(++S.seq.ann),title:{en:v.t,ar:v.t},body:{en:v.b,ar:v.b},cat:v.cat,pin:v.pin==='1',ts:Date.now(),by:'LSPD-1001'});UI.view='hub';commit();toast(T('Announcement posted','تم نشر التعميم'),'ok')});
+}
+ACT.newevt=()=>{if(!need('announce'))return;FM(T('Add event','إضافة فعالية'),[{k:'t',label:T('Title','العنوان'),req:1,full:1},{k:'date',type:'date',label:T('Date','التاريخ'),val:isoDay(Date.now()+DAY)},{k:'time',type:'time',label:T('Time','الوقت'),val:'20:00'},{k:'type',type:'select',label:T('Type','النوع'),opts:opt(EVT)}],v=>{S.events.push({id:'EV-'+(++S.seq.ev),date:v.date,time:v.time,title:{en:v.t,ar:v.t},type:v.type});commit();toast(T('Event added','تمت إضافة الفعالية'),'ok')})};
+
+/* ================= Setup & data ================= */
+function vSetup(){
+  const d=S.settings.dept,cnt=[['officers',T('Officers','العساكر'),S.officers.length],['units',T('Units','الوحدات'),S.units.length],['calls',T('Calls','البلاغات'),S.calls.length],['reports',T('Reports','التقارير'),S.reports.length],['sessions',T('Training sessions','دورات التدريب'),S.sessions.length],['cases',T('IA cases','قضايا الشؤون الداخلية'),S.cases.length],['ann',T('Announcements','التعاميم'),S.ann.length],['events',T('Events','الفعاليات'),S.events.length]];
+  return ph(T('Setup & Data','الإعدادات والبيانات'),T('Department settings, roles and backups.','إعدادات القسم والأدوار والنسخ الاحتياطي.'))+
+  `<div class="grid c2"><div class="card"><h3>${T('Department','القسم')}</h3><div class="kv"><div><small>${T('Name (EN)','الاسم (إنجليزي)')}</small><b>${esc(d.en)}</b></div><div><small>${T('Name (AR)','الاسم (عربي)')}</small><b>${esc(d.ar)}</b></div><div><small>${T('Server','السيرفر')}</small><b>${esc(d.server)}</b></div></div><div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn" data-act="editdept">${ic('edit',15)}${T('Edit details','تعديل البيانات')}</button></div></div>
+  <div class="card"><h3>${T('Data overview','نظرة على البيانات')}</h3><div class="kv">${cnt.map(c=>`<div><small>${c[1]}</small><b>${c[2]}</b></div>`).join('')}</div></div>
+  <div class="card"><h3>${T('Roles & permissions','الأدوار والصلاحيات')}</h3><div class="scroll"><table class="tbl"><thead><tr><th></th>${Object.keys(ROLES).map(r=>`<th>${esc(lb(ROLES,r))}</th>`).join('')}</tr></thead><tbody>${Object.keys(PERMN).map(p=>`<tr><td>${esc(lb(PERMN,p))}</td>${Object.keys(ROLES).map(r=>`<td>${PERM[r][p]?bd('✓','green nodot'):'<span class="mut">—</span>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div><div class="sub">${T('Everyone can file reports and view the directory. Use the profile menu to try each role.','يمكن للجميع تقديم التقارير وعرض الجدول. استخدم قائمة الملف الشخصي لتجربة كل دور.')}</div></div>
+  <div class="card"><h3>${T('Backup & restore','النسخ الاحتياطي والاستعادة')}</h3><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="backup">${ic('dl',16)}${T('Export backup (JSON)','تصدير نسخة (JSON)')}</button><button class="btn" data-act="restoreb">${T('Import backup','استيراد نسخة')}</button><button class="btn red" data-act="resetdemo">${T('Wipe all data','مسح كل البيانات')}</button></div><div class="sub" style="margin-top:8px">${T('Changes are saved in this browser only.','التغييرات تُحفظ في هذا المتصفح فقط.')}</div></div>
+  <div class="card"><h3>${T('Ranks','الرتب')}${can('setup')?`<button class="btn sm" data-act="go" data-to="ranks">${ic('edit',14)}${T('Manage ranks','إدارة الرتب')}</button>`:''}</h3>${RANKS.map((r,i)=>`<span class="chip" style="${isCmd(i)?'color:var(--gold2)':''}">${esc(r[LANG==='ar'?1:0])}</span>`).join('')}<h3 style="margin-top:14px">${T('Divisions','الأقسام')}</h3>${opt(DIVS).map(([,l])=>`<span class="chip">${esc(l)}</span>`).join('')}</div></div>`;
+}
+ACT.editdept=()=>{if(!need('setup'))return;const d=S.settings.dept;FM(T('Edit department','تعديل القسم'),[{k:'en',label:T('Name (EN)','الاسم (إنجليزي)'),val:d.en,req:1},{k:'ar',label:T('Name (AR)','الاسم (عربي)'),val:d.ar,req:1},{k:'server',label:T('Server name','اسم السيرفر'),val:d.server,full:1}],v=>{S.settings.dept={en:v.en,ar:v.ar,server:v.server};commit()})};
+ACT.togsim=()=>{if(!need('setup'))return;S.settings.sim=!S.settings.sim;commit()};
+ACT.backup=()=>{if(!need('setup'))return;saveFile('lspd-backup-'+isoDay(Date.now())+'.json',JSON.stringify(S,null,1))};
+ACT.restoreb=()=>{if(!need('setup'))return;UI.formCb=fd=>{try{const x=JSON.parse(fd.get('j'));if(!x||x.v!==3||!x.officers)throw 0;const st=S.settings;S=x;S.settings={...S.settings,...st};applyRanks();syncUnits(S);commit();toast(T('Backup restored','تمت الاستعادة'),'ok')}catch(e){toast(T('Invalid backup file','ملف النسخة غير صالح'),'err');return false}};openModal(T('Import backup','استيراد نسخة'),`<form id="mform"><div class="fld"><label for="j">${T('Paste backup JSON','الصق محتوى JSON')}</label><textarea class="big" id="j" name="j" required></textarea></div></form>`,`<button class="btn" data-act="close">${T('Cancel','إلغاء')}</button><button class="btn pri" type="submit" form="mform">${T('Import','استيراد')}</button>`)};
+ACT.resetdemo=()=>{if(!need('setup'))return;FM(T('Wipe all data?','مسح كل البيانات؟'),[{k:'ok',type:'select',label:T('This deletes all current data in this browser.','سيتم حذف كل البيانات الحالية في هذا المتصفح.'),full:1,opts:[['no',T('No, keep my data','لا، احتفظ ببياناتي')],['yes',T('Yes, wipe everything','نعم، امسح كل شيء')]]}],v=>{if(v.ok==='yes'){const st=S.settings;S=seed();S.settings={...S.settings,...st};applyRanks();commit();toast(T('All data wiped','تم مسح البيانات'),'ok')}})};
+
+/* ================= Rank management ================= */
+const remapRanks=fn=>S.officers.forEach(o=>{o.rank=fn(o.rank);(o.promos||[]).forEach(p=>{p.rank=fn(p.rank)})});
+const rkHeld=i=>S.officers.filter(o=>o.rank===i).length;
+function vRanks(){
+  const sw=(i)=>`<span style="display:inline-block;transform:rotate(180deg)">${ic('up',15)}</span>`;
+  return ph(T('Rank Management','إدارة الرتب'),T('The order is the seniority (top = highest). Renaming never affects officers; reordering moves officers together with their rank.','الترتيب هو الأقدمية (الأعلى = الأكبر). تغيير الاسم لا يؤثر على العساكر، وإعادة الترتيب تنقل العساكر مع رتبهم.'),`<button class="btn gold" data-act="addrank">${ic('plus',16)}${T('Add rank','إضافة رتبة')}</button>`)+
+  `<div class="card"><div class="scroll"><table class="tbl"><thead><tr><th>#</th><th>${T('Name (EN)','الاسم (إنجليزي)')}</th><th>${T('Name (AR)','الاسم (عربي)')}</th><th>${T('Abbr.','الاختصار')}</th><th>${T('Level','المستوى')}</th><th>${T('Officers','العساكر')}</th><th>${T('Actions','الإجراءات')}</th></tr></thead><tbody>${RANKS.map((r,i)=>`<tr><td>${i+1}</td><td><b>${esc(r[0])}</b></td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${r[3]?bd(T('Command','قيادة'),'gold'):''} ${r[4]?bd(T('Supervises','يشرف'),'steel'):''}</td><td>${rkHeld(i)}</td><td class="act"><button class="btn sm ico" data-act="rankmv" data-i="${i}" data-d="-1" ${i===0?'disabled':''} aria-label="${T('Move up','أعلى')}">${ic('up',15)}</button> <button class="btn sm ico" data-act="rankmv" data-i="${i}" data-d="1" ${i===RANKS.length-1?'disabled':''} aria-label="${T('Move down','أسفل')}">${sw(i)}</button> <button class="btn sm ico" data-act="editrank" data-i="${i}" aria-label="${T('Edit','تعديل')}">${ic('edit',15)}</button> <button class="btn sm ico red" data-act="delrank" data-i="${i}" aria-label="${T('Delete','حذف')}">${ic('x',15)}</button></td></tr>`).join('')}</tbody></table></div><div class="sub" style="margin-top:10px">${T('"Command" ranks are shown in gold. "Supervises" ranks can be chosen as an officer\'s supervisor.','رتب "قيادة" تظهر بالذهبي. رتب "يشرف" يمكن اختيارها كمشرف للعسكري.')}</div></div>`;
+}
+const yn=()=>[['1',T('Yes','نعم')],['0',T('No','لا')]];
+function rankFields(r,withPos){
+  const f=[{k:'en',label:T('Name (EN)','الاسم (إنجليزي)'),val:r?r[0]:'',req:1},{k:'ar',label:T('Name (AR)','الاسم (عربي)'),val:r?r[1]:'',req:1},{k:'abbr',label:T('Abbreviation','الاختصار'),val:r?r[2]:''},{k:'cmd',type:'select',label:T('Command rank (gold)','رتبة قيادة (ذهبي)'),val:r&&r[3]?'1':'0',opts:yn()},{k:'sup',type:'select',label:T('Can be a supervisor','يمكن أن يكون مشرفاً'),val:r&&r[4]?'1':'0',opts:yn()}];
+  if(withPos)f.push({k:'pos',type:'select',label:T('Insert position','مكان الإضافة'),val:RANKS.length,opts:[...RANKS.map((x,i)=>[i,T('Before: ','قبل: ')+x[LANG==='ar'?1:0]]),[RANKS.length,T('At the end (lowest)','في النهاية (الأدنى)')]]});
+  return f;
+}
+ACT.addrank=()=>{if(!need('setup'))return;FM(T('Add rank','إضافة رتبة'),rankFields(null,true),v=>{
+  const p=Math.min(Math.max(0,+v.pos),RANKS.length);remapRanks(r=>r>=p?r+1:r);
+  RANKS.splice(p,0,[v.en,v.ar,v.abbr||v.en.slice(0,4).toUpperCase(),v.cmd==='1'?1:0,v.sup==='1'?1:0]);syncRK();commit();toast(T('Rank added','تمت إضافة الرتبة'),'ok')})};
+ACT.editrank=d=>{if(!need('setup'))return;const i=+d.i,r=RANKS[i];FM(T('Edit rank','تعديل رتبة'),rankFields(r,false),v=>{
+  RANKS[i]=[v.en,v.ar,v.abbr||r[2],v.cmd==='1'?1:0,v.sup==='1'?1:0];syncRK();commit();toast(T('Rank updated','تم تحديث الرتبة'),'ok')})};
+ACT.rankmv=d=>{if(!need('setup'))return;const i=+d.i,j=i+ +d.d;if(j<0||j>=RANKS.length)return;
+  remapRanks(r=>r===i?j:r===j?i:r);[RANKS[i],RANKS[j]]=[RANKS[j],RANKS[i]];syncRK();commit()};
+ACT.delrank=d=>{if(!need('setup'))return;const i=+d.i,n=rkHeld(i);
+  if(RANKS.length<=1){toast(T('At least one rank is required','يلزم وجود رتبة واحدة على الأقل'),'err');return}
+  if(n){toast(T(n+' officer(s) hold this rank. Move them to another rank first.','يوجد '+n+' عسكري بهذه الرتبة. انقلهم لرتبة أخرى أولاً.'),'err');return}
+  FM(T('Delete rank?','حذف الرتبة؟')+' — '+RANKS[i][LANG==='ar'?1:0],[{k:'ok',type:'select',full:1,label:T('Promotion history entries that used this rank will point to the nearest rank.','سجلات الترقية التي استخدمت هذه الرتبة ستشير لأقرب رتبة.'),opts:[['no',T('No, keep it','لا، احتفظ بها')],['yes',T('Yes, delete','نعم، احذف')]]}],v=>{
+    if(v.ok!=='yes')return;RANKS.splice(i,1);remapRanks(r=>r>i?r-1:(r===i?Math.min(i,RANKS.length-1):r));syncRK();commit();toast(T('Rank deleted','تم حذف الرتبة'))},{save:T('Confirm','تأكيد')})};
+
+/* ================= boot ================= */
+S=load();applyRanks();LANG=S.settings.lang||'en';
+fromHash();
+render();
+tryRestore();
+setInterval(()=>{document.querySelectorAll('[data-clock]').forEach(e=>e.textContent=new Date().toLocaleTimeString(loc(),{hour12:false}))},1000);
+setInterval(tick,12000);
+</script>
+</body>
+</html>
